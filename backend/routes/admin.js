@@ -57,11 +57,17 @@ router.post('/foods', authenticateAdmin, upload.single('image'), async (req, res
       return res.status(404).json({ message: 'Category not found' });
     }
 
-    // Upload to Cloudinary
-    const imageUrl = await uploadToCloudinary(req.file.path);
-    
-    // Delete local file
-    fs.unlinkSync(req.file.path);
+    // Upload to Cloudinary (fallback to local uploads if Cloudinary isn't configured)
+    let imageUrl;
+    try {
+      imageUrl = await uploadToCloudinary(req.file.path);
+      // Delete local file (only if Cloudinary succeeded)
+      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    } catch (e) {
+      // Keep local file and serve it via /uploads
+      imageUrl = `/uploads/${req.file.filename}`;
+      console.warn('[admin foods] Cloudinary failed, using local upload:', e.message);
+    }
 
     const food = new Food({
       name,
@@ -80,7 +86,9 @@ router.post('/foods', authenticateAdmin, upload.single('image'), async (req, res
     res.status(201).json(food);
   } catch (error) {
     if (req.file) {
-      fs.unlinkSync(req.file.path);
+      try {
+        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      } catch (_) {}
     }
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -112,9 +120,15 @@ router.put('/foods/:id', authenticateAdmin, upload.single('image'), async (req, 
     }
 
     if (req.file) {
-      const imageUrl = await uploadToCloudinary(req.file.path);
-      food.image = imageUrl;
-      fs.unlinkSync(req.file.path);
+      try {
+        const imageUrl = await uploadToCloudinary(req.file.path);
+        food.image = imageUrl;
+        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      } catch (e) {
+        // fallback to local file
+        food.image = `/uploads/${req.file.filename}`;
+        console.warn('[admin foods update] Cloudinary failed, using local upload:', e.message);
+      }
     }
 
     await food.save();
@@ -123,7 +137,9 @@ router.put('/foods/:id', authenticateAdmin, upload.single('image'), async (req, 
     res.json(food);
   } catch (error) {
     if (req.file) {
-      fs.unlinkSync(req.file.path);
+      try {
+        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      } catch (_) {}
     }
     res.status(500).json({ message: 'Server error', error: error.message });
   }

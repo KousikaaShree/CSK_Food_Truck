@@ -1,68 +1,171 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import { FiShoppingCart, FiUser, FiLogOut } from 'react-icons/fi';
+import { FiLogOut, FiMenu, FiShoppingCart, FiUser, FiX } from 'react-icons/fi';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const { getCartItemCount } = useCart();
   const navigate = useNavigate();
   const cartCount = getCartItemCount();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/');
   };
 
+  useEffect(() => {
+    // close mobile menu when route changes via navigate()
+    return () => setMobileOpen(false);
+  }, []);
+
+  const linkBase =
+    'text-sm font-medium text-csk-creamText/85 hover:text-csk-yellow transition-colors';
+  const activeLink = 'text-csk-creamText';
+
   return (
-    <nav className="bg-white shadow-md sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          <Link to="/" className="text-2xl font-bold text-primary-600">
-            🍔 CSK Food Truck
+    <nav className="sticky top-0 z-50 backdrop-blur bg-csk-brown/90 border-b border-white/10">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between py-4">
+          <Link to="/" className="flex items-center gap-3">
+            <img
+              src="/csk-logo.png"
+              alt="CSK Food Truck logo"
+              className="h-10 w-auto md:h-11 object-contain"
+            />
+            <div className="leading-tight">
+              <div className="font-heading text-xl font-bold text-csk-creamText">
+                CSK Food Truck
+              </div>
+              <div className="text-xs text-white/70">Chicken Shawarma & Kebab</div>
+            </div>
           </Link>
 
-          <div className="flex items-center gap-6">
-            <Link to="/" className="text-gray-700 hover:text-primary-600 transition">
+          {/* Desktop */}
+          <div className="hidden md:flex items-center gap-6">
+            <NavLink to="/" className={({ isActive }) => `${linkBase} ${isActive ? activeLink : ''}`}>
               Home
-            </Link>
+            </NavLink>
+
+            <NavLink to="/about" className={({ isActive }) => `${linkBase} ${isActive ? activeLink : ''}`}>
+              About Us
+            </NavLink>
+            <NavLink to="/menu" className={({ isActive }) => `${linkBase} ${isActive ? activeLink : ''}`}>
+              Menu
+            </NavLink>
+            <NavLink to="/contact" className={({ isActive }) => `${linkBase} ${isActive ? activeLink : ''}`}>
+              Contact
+            </NavLink>
+
+            <NavLink to="/cart" className="relative inline-flex items-center gap-2 text-sm font-medium text-csk-creamText/85 hover:text-csk-yellow transition">
+              <FiShoppingCart />
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-3 bg-csk-yellow text-csk-charcoal text-[11px] font-semibold rounded-full min-w-5 h-5 px-1 flex items-center justify-center shadow-soft">
+                  {cartCount}
+                </span>
+              )}
+            </NavLink>
+
+            <NavLink
+              to="/dashboard"
+              className="inline-flex items-center gap-2 text-sm font-medium text-csk-creamText/85 hover:text-csk-yellow transition"
+              aria-label="User Dashboard"
+            >
+              <FiUser />
+            </NavLink>
 
             {user ? (
-              <>
-                <Link to="/dashboard" className="text-gray-700 hover:text-primary-600 transition flex items-center gap-1">
-                  <FiUser /> Dashboard
-                </Link>
-                <Link to="/cart" className="relative text-gray-700 hover:text-primary-600 transition flex items-center gap-1">
-                  <FiShoppingCart />
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center gap-2 text-sm font-medium text-csk-creamText/85 hover:text-csk-yellow transition"
+              >
+                <FiLogOut /> Logout
+              </button>
+            ) : (
+              <div className="flex items-center gap-3">
+                <NavLink to="/login" className={({ isActive }) => `${linkBase} ${isActive ? activeLink : ''}`}>
+                  Login
+                </NavLink>
+                <NavLink
+                  to="/signup"
+                  className="inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold bg-csk-yellow text-csk-charcoal hover:bg-csk-yellowSoft transition shadow-soft"
+                >
+                  Sign Up
+                </NavLink>
+              </div>
+            )}
+          </div>
+
+          {/* Mobile toggle */}
+          <button
+            className="md:hidden inline-flex items-center justify-center h-10 w-10 rounded-xl bg-white/10 shadow-soft ring-1 ring-white/15 text-white"
+            onClick={() => setMobileOpen((v) => !v)}
+            aria-label="Toggle menu"
+            type="button"
+          >
+            {mobileOpen ? <FiX /> : <FiMenu />}
+          </button>
+        </div>
+
+        {/* Mobile menu */}
+        {mobileOpen && (
+          <div className="md:hidden pb-4">
+            <div className="rounded-xl bg-csk-brownSoft shadow-soft ring-1 ring-white/10 p-3 flex flex-col gap-1">
+              <NavLink to="/" className="rounded-lg px-3 py-2 text-sm text-white/90 hover:bg-white/10" onClick={() => setMobileOpen(false)}>
+                Home
+              </NavLink>
+              <NavLink to="/about" className="rounded-lg px-3 py-2 text-sm text-white/90 hover:bg-white/10" onClick={() => setMobileOpen(false)}>
+                About Us
+              </NavLink>
+              <NavLink to="/menu" className="rounded-lg px-3 py-2 text-sm text-white/90 hover:bg-white/10" onClick={() => setMobileOpen(false)}>
+                Menu
+              </NavLink>
+              <NavLink to="/contact" className="rounded-lg px-3 py-2 text-sm text-white/90 hover:bg-white/10" onClick={() => setMobileOpen(false)}>
+                Contact
+              </NavLink>
+
+              <div className="mt-2 pt-2 border-t border-white/10 flex items-center justify-between">
+                <NavLink to="/cart" className="inline-flex items-center gap-2 text-sm font-medium text-white/90" onClick={() => setMobileOpen(false)}>
+                  <FiShoppingCart /> Cart
                   {cartCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-primary-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    <span className="ml-1 bg-csk-yellow text-csk-charcoal text-[11px] font-semibold rounded-full min-w-5 h-5 px-1 flex items-center justify-center">
                       {cartCount}
                     </span>
                   )}
-                  Cart
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="text-gray-700 hover:text-primary-600 transition flex items-center gap-1"
+                </NavLink>
+                <NavLink
+                  to="/dashboard"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-white/90"
+                  onClick={() => setMobileOpen(false)}
+                  aria-label="User Dashboard"
                 >
-                  <FiLogOut /> Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <Link to="/login" className="text-gray-700 hover:text-primary-600 transition">
-                  Login
-                </Link>
-                <Link
-                  to="/signup"
-                  className="bg-primary-500 text-white px-4 py-2 rounded-full hover:bg-primary-600 transition"
-                >
-                  Sign Up
-                </Link>
-              </>
-            )}
+                  <FiUser />
+                </NavLink>
+
+                {user ? (
+                  <button onClick={handleLogout} className="inline-flex items-center gap-2 text-sm font-medium text-csk-charcoal/80 hover:text-csk-charcoal">
+                    <FiLogOut /> Logout
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <NavLink to="/login" className="text-sm font-medium text-csk-charcoal/80 hover:text-csk-charcoal" onClick={() => setMobileOpen(false)}>
+                      Login
+                    </NavLink>
+                    <NavLink
+                      to="/signup"
+                      className="inline-flex items-center justify-center rounded-full px-3 py-2 text-sm font-semibold bg-csk-yellow text-csk-charcoal hover:bg-csk-yellowSoft transition"
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      Sign Up
+                    </NavLink>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </nav>
   );

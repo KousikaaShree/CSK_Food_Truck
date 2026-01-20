@@ -1,51 +1,15 @@
-import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import { FiShoppingCart } from 'react-icons/fi';
+import { FiArrowRight, FiShoppingCart } from 'react-icons/fi';
+import { useMenu } from '../context/MenuContext';
 
 const Home = () => {
-  const [categories, setCategories] = useState([]);
-  const [foods, setFoods] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [loading, setLoading] = useState(true);
+  const heroVideoSrc = '/videos/hero.mp4';
+  const { items: menuItems } = useMenu();
   const { user } = useAuth();
   const { addToCart } = useCart();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    fetchCategories();
-    fetchFoods();
-  }, []);
-
-  useEffect(() => {
-    fetchFoods();
-  }, [selectedCategory]);
-
-  const fetchCategories = async () => {
-    try {
-      const res = await axios.get('/api/foods/categories');
-      setCategories(res.data);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-    }
-  };
-
-  const fetchFoods = async () => {
-    setLoading(true);
-    try {
-      const url = selectedCategory === 'all' 
-        ? '/api/foods' 
-        : `/api/foods?category=${selectedCategory}`;
-      const res = await axios.get(url);
-      setFoods(res.data);
-    } catch (error) {
-      console.error('Error fetching foods:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleAddToCart = async (foodId) => {
     if (!user) {
@@ -63,93 +27,100 @@ const Home = () => {
 
   return (
     <div className="min-h-screen pb-20">
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-pastel-pink to-pastel-yellow py-16">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-5xl font-bold text-gray-800 mb-4">
-            Welcome to CSK Food Truck
-          </h1>
-          <p className="text-xl text-gray-600">
-            Delicious food delivered to your doorstep
+      {/* Hero */}
+      <section className="relative h-[78vh] md:h-[86vh] w-full overflow-hidden">
+        <video
+          className="absolute inset-0 h-full w-full object-cover"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          poster="/csk-logo.png"
+        >
+          <source src={heroVideoSrc} type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-black/55" />
+        <div className="relative z-10 h-full">
+          <div className="container mx-auto px-4 h-full flex items-center">
+            <div className="max-w-2xl text-left text-white animate-[fadeInUp_700ms_ease-out]">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 ring-1 ring-white/15 mb-6">
+                <span className="h-2 w-2 rounded-full bg-csk-yellow" />
+                <span className="text-sm text-white/90">Premium street food • Clean & fresh</span>
+              </div>
+
+              <h1 className="font-heading text-white text-4xl md:text-6xl font-extrabold leading-tight tracking-tight">
+                Chicken Shawarma & Kebabs
+              </h1>
+              <p className="mt-5 text-base md:text-lg text-white/85 max-w-xl">
+                Warmly grilled, generously filled, and made with quality ingredients. A calm, premium food experience—
+                perfect for a quick bite or a full meal.
+              </p>
+
+              <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:items-center">
+                <a
+                  href="#menu-section"
+                  className="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold bg-csk-yellow text-csk-charcoal hover:bg-csk-yellowSoft transition shadow-soft"
+                >
+                  View Menu <FiArrowRight className="ml-2" />
+                </a>
+                <button
+                  type="button"
+                  onClick={() => navigate('/cart')}
+                  className="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold text-white ring-1 ring-white/40 hover:ring-white/70 hover:bg-white/10 transition"
+                >
+                  Order Now
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Featured (no filters on Home) */}
+      <div id="menu-section" className="container mx-auto px-4 py-12">
+        <div className="mb-10 text-center">
+          <h2 className="font-heading text-3xl md:text-4xl font-bold text-csk-charcoal">
+            Today’s Popular Picks
+          </h2>
+          <p className="mt-3 text-csk-text max-w-2xl mx-auto">
+            Handpicked favorites to get you started. Explore the full menu for all categories.
           </p>
         </div>
-      </div>
 
-      {/* Categories */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-wrap gap-4 justify-center mb-8">
-          <button
-            onClick={() => setSelectedCategory('all')}
-            className={`px-6 py-2 rounded-full transition ${
-              selectedCategory === 'all'
-                ? 'bg-primary-500 text-white'
-                : 'bg-white text-gray-700 hover:bg-pastel-pink'
-            }`}
-          >
-            All
-          </button>
-          {categories.map((category) => (
-            <button
-              key={category._id}
-              onClick={() => setSelectedCategory(category.name)}
-              className={`px-6 py-2 rounded-full transition ${
-                selectedCategory === category.name
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-white text-gray-700 hover:bg-pastel-pink'
-              }`}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {menuItems.slice(0, 4).map((food) => (
+            <div
+              key={food.id}
+              className="bg-white rounded-xl shadow-soft ring-1 ring-black/5 overflow-hidden hover:shadow-lift transition transform hover:-translate-y-1"
             >
-              {category.name}
-            </button>
+              <img src={food.image} alt={food.name} className="w-full h-44 object-cover" loading="lazy" />
+              <div className="p-5">
+                <h3 className="font-heading text-lg font-semibold text-csk-charcoal">{food.name}</h3>
+                <p className="mt-2 text-sm text-csk-text line-clamp-2">{food.description}</p>
+                <div className="mt-4 flex items-center justify-between">
+                  <span className="text-xl font-bold text-csk-charcoal">₹{food.price}</span>
+                  <button
+                    onClick={() => handleAddToCart(food.id)}
+                    className="bg-csk-yellow text-csk-charcoal px-4 py-2 rounded-full hover:bg-csk-yellowSoft transition flex items-center gap-2 shadow-soft text-sm font-semibold"
+                  >
+                    <FiShoppingCart /> Add
+                  </button>
+                </div>
+              </div>
+            </div>
           ))}
         </div>
 
-        {/* Food Items */}
-        {loading ? (
-          <div className="text-center py-12">Loading...</div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {foods.map((food) => (
-              <div
-                key={food._id}
-                className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition transform hover:-translate-y-1"
-              >
-                <img
-                  src={food.image}
-                  alt={food.name}
-                  className="w-full h-56 object-cover"
-                  onError={(e) => {
-                    e.target.src = 'https://via.placeholder.com/400x300?text=Food+Image';
-                  }}
-                />
-                <div className="p-4">
-                  <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                    {food.name}
-                  </h3>
-                  <p className="text-gray-600 text-sm mb-3 leading-relaxed">
-                    {food.description}
-                  </p>
-                  <div className="flex items-center justify-between mt-4">
-                    <span className="text-2xl font-bold text-primary-600">
-                      ₹{food.price}
-                    </span>
-                    <button
-                      onClick={() => handleAddToCart(food._id)}
-                      className="bg-primary-500 text-white px-6 py-2 rounded-full hover:bg-primary-600 transition flex items-center gap-2 shadow-md hover:shadow-lg"
-                    >
-                      <FiShoppingCart /> Add to Cart
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {!loading && foods.length === 0 && (
-          <div className="text-center py-12 text-gray-500">
-            No food items found in this category
-          </div>
-        )}
+        <div className="mt-10 text-center">
+          <button
+            type="button"
+            onClick={() => navigate('/menu')}
+            className="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold bg-csk-yellow text-csk-charcoal hover:bg-csk-yellowSoft transition shadow-soft"
+          >
+            View Full Menu <FiArrowRight className="ml-2" />
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -92,8 +92,13 @@ const AdminMenu = () => {
       });
       fetchFoods();
     } catch (error) {
-      alert('Error saving food item');
-      console.error(error);
+      const msg =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        'Error saving food item';
+      console.error('Save food error:', error?.response?.data || error);
+      alert(msg);
     }
   };
 
