@@ -22,21 +22,21 @@ const Navbar = () => {
   }, []);
 
   const linkBase =
-    'text-sm font-medium text-csk-creamText/85 hover:text-csk-yellow transition-colors';
-  const activeLink = 'text-csk-creamText';
+    'text-sm font-medium text-gray-100/80 hover:text-csk-yellow transition-colors';
+  const activeLink = 'text-white';
 
   return (
-    <nav className="sticky top-0 z-50 backdrop-blur bg-csk-brown/90 border-b border-white/10">
+    <nav className="sticky top-0 z-50 backdrop-blur bg-gradient-to-r from-[#0d0d10]/95 via-[#111118]/95 to-[#0b0b0f]/95 border-b border-white/10">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between py-4">
-          <Link to="/" className="flex items-center gap-3">
+        <div className="flex items-center justify-between py-4 gap-6">
+          <Link to="/" className="flex items-center gap-3 shrink-0">
             <img
               src="/csk-logo.png"
               alt="CSK Food Truck logo"
               className="h-10 w-auto md:h-11 object-contain"
             />
             <div className="leading-tight">
-              <div className="font-heading text-xl font-bold text-csk-creamText">
+              <div className="font-heading text-xl font-bold text-white">
                 CSK Food Truck
               </div>
               <div className="text-xs text-white/70">Chicken Shawarma & Kebab</div>
@@ -44,7 +44,7 @@ const Navbar = () => {
           </Link>
 
           {/* Desktop */}
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-6 flex-1 justify-center">
             <NavLink to="/" className={({ isActive }) => `${linkBase} ${isActive ? activeLink : ''}`}>
               Home
             </NavLink>
@@ -58,11 +58,13 @@ const Navbar = () => {
             <NavLink to="/contact" className={({ isActive }) => `${linkBase} ${isActive ? activeLink : ''}`}>
               Contact
             </NavLink>
+          </div>
 
-            <NavLink to="/cart" className="relative inline-flex items-center gap-2 text-sm font-medium text-csk-creamText/85 hover:text-csk-yellow transition">
+          <div className="hidden md:flex items-center gap-6">
+            <NavLink to="/cart" className="relative inline-flex items-center gap-2 text-sm font-medium text-gray-100/80 hover:text-csk-yellow transition">
               <FiShoppingCart />
               {cartCount > 0 && (
-                <span className="absolute -top-2 -right-3 bg-csk-yellow text-csk-charcoal text-[11px] font-semibold rounded-full min-w-5 h-5 px-1 flex items-center justify-center shadow-soft">
+                <span className="absolute -top-2 -right-3 bg-csk-yellow text-[#0b0b0f] text-[11px] font-semibold rounded-full min-w-5 h-5 px-1 flex items-center justify-center shadow-soft">
                   {cartCount}
                 </span>
               )}
@@ -70,7 +72,7 @@ const Navbar = () => {
 
             <NavLink
               to="/dashboard"
-              className="inline-flex items-center gap-2 text-sm font-medium text-csk-creamText/85 hover:text-csk-yellow transition"
+              className="inline-flex items-center gap-2 text-sm font-medium text-gray-100/80 hover:text-csk-yellow transition"
               aria-label="User Dashboard"
             >
               <FiUser />
@@ -79,7 +81,7 @@ const Navbar = () => {
             {user ? (
               <button
                 onClick={handleLogout}
-                className="inline-flex items-center gap-2 text-sm font-medium text-csk-creamText/85 hover:text-csk-yellow transition"
+                className="inline-flex items-center gap-2 text-sm font-medium text-gray-100/80 hover:text-csk-yellow transition"
               >
                 <FiLogOut /> Logout
               </button>
@@ -90,7 +92,7 @@ const Navbar = () => {
                 </NavLink>
                 <NavLink
                   to="/signup"
-                  className="inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold bg-csk-yellow text-csk-charcoal hover:bg-csk-yellowSoft transition shadow-soft"
+                  className="inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold bg-csk-yellow text-[#0b0b0f] hover:bg-csk-yellowSoft transition shadow-soft ring-1 ring-csk-yellow/60"
                 >
                   Sign Up
                 </NavLink>
@@ -112,7 +114,7 @@ const Navbar = () => {
         {/* Mobile menu */}
         {mobileOpen && (
           <div className="md:hidden pb-4">
-            <div className="rounded-xl bg-csk-brownSoft shadow-soft ring-1 ring-white/10 p-3 flex flex-col gap-1">
+            <div className="rounded-xl bg-[#111118] shadow-soft ring-1 ring-white/10 p-3 flex flex-col gap-1">
               <NavLink to="/" className="rounded-lg px-3 py-2 text-sm text-white/90 hover:bg-white/10" onClick={() => setMobileOpen(false)}>
                 Home
               </NavLink>
@@ -130,7 +132,7 @@ const Navbar = () => {
                 <NavLink to="/cart" className="inline-flex items-center gap-2 text-sm font-medium text-white/90" onClick={() => setMobileOpen(false)}>
                   <FiShoppingCart /> Cart
                   {cartCount > 0 && (
-                    <span className="ml-1 bg-csk-yellow text-csk-charcoal text-[11px] font-semibold rounded-full min-w-5 h-5 px-1 flex items-center justify-center">
+                <span className="ml-1 bg-csk-yellow text-[#0b0b0f] text-[11px] font-semibold rounded-full min-w-5 h-5 px-1 flex items-center justify-center">
                       {cartCount}
                     </span>
                   )}
@@ -155,7 +157,7 @@ const Navbar = () => {
                     </NavLink>
                     <NavLink
                       to="/signup"
-                      className="inline-flex items-center justify-center rounded-full px-3 py-2 text-sm font-semibold bg-csk-yellow text-csk-charcoal hover:bg-csk-yellowSoft transition"
+                      className="inline-flex items-center justify-center rounded-full px-3 py-2 text-sm font-semibold bg-csk-yellow text-[#0b0b0f] hover:bg-csk-yellowSoft transition"
                       onClick={() => setMobileOpen(false)}
                     >
                       Sign Up

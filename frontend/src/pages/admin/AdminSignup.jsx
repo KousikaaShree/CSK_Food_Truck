@@ -47,13 +47,13 @@ const AdminSignup = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-pastel-blue to-pastel-purple py-12 px-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#0b0b0e] via-[#0f0f14] to-[#0b0b0e] py-12 px-4 text-white">
+      <div className="max-w-md w-full bg-[#14151a] rounded-2xl shadow-soft ring-1 ring-white/10 p-8">
         <div className="text-center mb-6">
-          <h2 className="text-3xl font-bold text-gray-800 mb-2">
+          <h2 className="text-3xl font-bold text-csk-yellow mb-2">
             Admin Signup
           </h2>
-          <p className="text-gray-600 text-sm">
+          <p className="text-gray-300 text-sm">
             Create your admin account to manage CSK Food Truck
           </p>
         </div>
@@ -66,7 +66,7 @@ const AdminSignup = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-gray-700 mb-2 font-medium">Full Name</label>
+            <label className="block text-sm text-gray-200 mb-2 font-medium">Full Name</label>
             <input
               type="text"
               name="name"
@@ -74,12 +74,12 @@ const AdminSignup = () => {
               onChange={handleChange}
               required
               placeholder="Enter your full name"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-3 rounded-lg border border-white/10 bg-[#0f0f14] text-white placeholder:text-gray-500 focus:ring-2 focus:ring-csk-yellow/70 focus:border-transparent"
             />
           </div>
 
           <div>
-            <label className="block text-gray-700 mb-2 font-medium">Email Address</label>
+            <label className="block text-sm text-gray-200 mb-2 font-medium">Email Address</label>
             <input
               type="email"
               name="email"
@@ -87,12 +87,12 @@ const AdminSignup = () => {
               onChange={handleChange}
               required
               placeholder="admin@cskfoodtruck.com"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-3 rounded-lg border border-white/10 bg-[#0f0f14] text-white placeholder:text-gray-500 focus:ring-2 focus:ring-csk-yellow/70 focus:border-transparent"
             />
           </div>
 
           <div>
-            <label className="block text-gray-700 mb-2 font-medium">Password</label>
+            <label className="block text-sm text-gray-200 mb-2 font-medium">Password</label>
             <input
               type="password"
               name="password"
@@ -101,13 +101,13 @@ const AdminSignup = () => {
               required
               minLength={6}
               placeholder="Minimum 6 characters"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-3 rounded-lg border border-white/10 bg-[#0f0f14] text-white placeholder:text-gray-500 focus:ring-2 focus:ring-csk-yellow/70 focus:border-transparent"
             />
             <p className="text-xs text-gray-500 mt-1">Must be at least 6 characters long</p>
           </div>
 
           <div>
-            <label className="block text-gray-700 mb-2 font-medium">Confirm Password</label>
+            <label className="block text-sm text-gray-200 mb-2 font-medium">Confirm Password</label>
             <input
               type="password"
               name="confirmPassword"
@@ -115,32 +115,32 @@ const AdminSignup = () => {
               onChange={handleChange}
               required
               placeholder="Re-enter your password"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-3 rounded-lg border border-white/10 bg-[#0f0f14] text-white placeholder:text-gray-500 focus:ring-2 focus:ring-csk-yellow/70 focus:border-transparent"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-primary-500 text-white py-3 rounded-lg hover:bg-primary-600 transition disabled:opacity-50 font-semibold shadow-md hover:shadow-lg"
+            className="w-full bg-csk-yellow text-[#0b0b0f] py-3 rounded-lg hover:bg-csk-yellowSoft transition disabled:opacity-50 font-semibold shadow-soft ring-1 ring-csk-yellow/60"
           >
             {loading ? 'Creating Account...' : 'Create Admin Account'}
           </button>
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-gray-600 text-sm">
+          <p className="text-gray-300 text-sm">
             Already have an account?{' '}
             <Link 
               to="/admin/login" 
-              className="text-primary-600 hover:text-primary-700 font-semibold hover:underline"
+              className="text-csk-yellow hover:underline font-semibold"
             >
               Login here
             </Link>
           </p>
         </div>
 
-        <div className="mt-4 pt-4 border-t border-gray-200">
+        <div className="mt-4 pt-4 border-t border-white/10">
           <p className="text-xs text-gray-500 text-center">
             ⚠️ Admin accounts have full access to manage the food truck system
           </p>

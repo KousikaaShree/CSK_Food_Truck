@@ -68,28 +68,28 @@ const AdminOrders = () => {
 
   const getStatusColor = (status) => {
     const colors = {
-      placed: 'bg-blue-100 text-blue-800',
-      preparing: 'bg-yellow-100 text-yellow-800',
-      out_for_delivery: 'bg-purple-100 text-purple-800',
-      delivered: 'bg-green-100 text-green-800',
-      cancelled: 'bg-red-100 text-red-800'
+      placed: 'bg-csk-yellow/15 text-csk-yellow',
+      preparing: 'bg-csk-yellow/25 text-csk-yellow',
+      out_for_delivery: 'bg-csk-yellow/25 text-csk-yellow',
+      delivered: 'bg-[#18181f] text-gray-100',
+      cancelled: 'bg-[#18181f] text-gray-400'
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return colors[status] || 'bg-[#18181f] text-gray-200';
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#0b0b0e] via-[#0f0f14] to-[#0b0b0e] text-white">Loading...</div>;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-md">
+    <div className="min-h-screen bg-gradient-to-b from-[#0b0b0e] via-[#0f0f14] to-[#0b0b0e] text-white">
+      <nav className="bg-gradient-to-r from-[#0d0d10]/95 via-[#111118]/95 to-[#0b0b0f]/95 shadow-soft backdrop-blur">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <Link to="/admin/dashboard" className="text-2xl font-bold text-primary-600">
+            <Link to="/admin/dashboard" className="text-2xl font-bold text-white">
               Admin Panel
             </Link>
-            <Link to="/admin/dashboard" className="text-gray-700 hover:text-primary-600">
+            <Link to="/admin/dashboard" className="text-gray-100/85 hover:text-csk-yellow">
               Back to Dashboard
             </Link>
           </div>
@@ -97,23 +97,23 @@ const AdminOrders = () => {
       </nav>
 
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8">Order Management</h1>
+        <h1 className="text-3xl font-bold text-csk-yellow mb-8">Order Management</h1>
 
         <div className="grid md:grid-cols-2 gap-6">
           <div className="space-y-4">
             {orders.map((order) => (
               <div
                 key={order._id}
-                className="bg-white rounded-2xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition"
+                className="bg-[#14151a] rounded-2xl shadow-soft ring-1 ring-white/10 p-6 cursor-pointer hover:shadow-lift transition"
                 onClick={() => setSelectedOrder(order)}
               >
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="font-bold text-gray-800">Order #{order.orderId}</h3>
-                    <p className="text-sm text-gray-600">
+                    <h3 className="font-bold text-white">Order #{order.orderId}</h3>
+                    <p className="text-sm text-gray-400">
                       {order.user?.name} - {order.user?.email}
                     </p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-400">
                       {new Date(order.createdAt).toLocaleString()}
                     </p>
                   </div>
@@ -123,10 +123,10 @@ const AdminOrders = () => {
                 </div>
 
                 <div className="mb-4">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-400">
                     Payment: {order.paymentMethod.toUpperCase()} - {order.paymentStatus}
                   </p>
-                  <p className="text-lg font-bold text-primary-600">Total: ₹{order.total.toFixed(2)}</p>
+                  <p className="text-lg font-bold text-csk-yellow">Total: ₹{order.total.toFixed(2)}</p>
                 </div>
 
                 <div className="flex gap-2">
@@ -136,7 +136,7 @@ const AdminOrders = () => {
                         e.stopPropagation();
                         updateOrderStatus(order._id, 'preparing');
                       }}
-                      className="flex-1 bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition"
+                      className="flex-1 bg-csk-yellow text-[#0b0b0f] px-4 py-2 rounded-lg hover:bg-csk-yellowSoft transition font-semibold ring-1 ring-csk-yellow/60"
                     >
                       Start Preparing
                     </button>
@@ -147,7 +147,7 @@ const AdminOrders = () => {
                         e.stopPropagation();
                         updateOrderStatus(order._id, 'out_for_delivery');
                       }}
-                      className="flex-1 bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition"
+                      className="flex-1 bg-csk-yellow text-[#0b0b0f] px-4 py-2 rounded-lg hover:bg-csk-yellowSoft transition font-semibold ring-1 ring-csk-yellow/60"
                     >
                       Out for Delivery
                     </button>
@@ -158,7 +158,7 @@ const AdminOrders = () => {
                         e.stopPropagation();
                         updateOrderStatus(order._id, 'delivered');
                       }}
-                      className="flex-1 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition"
+                      className="flex-1 bg-csk-yellow text-[#0b0b0f] px-4 py-2 rounded-lg hover:bg-csk-yellowSoft transition font-semibold ring-1 ring-csk-yellow/60"
                     >
                       Mark Delivered
                     </button>
@@ -169,40 +169,40 @@ const AdminOrders = () => {
           </div>
 
           {selectedOrder && (
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Order Details</h2>
+            <div className="bg-[#14151a] rounded-2xl shadow-soft ring-1 ring-white/10 p-6">
+              <h2 className="text-xl font-bold text-csk-yellow mb-4">Order Details</h2>
               
               <div className="mb-4">
-                <h3 className="font-semibold mb-2">Customer Info</h3>
-                <p className="text-sm text-gray-600">Name: {selectedOrder.user?.name}</p>
-                <p className="text-sm text-gray-600">Email: {selectedOrder.user?.email}</p>
-                <p className="text-sm text-gray-600">Mobile: {selectedOrder.user?.mobile}</p>
+                <h3 className="font-semibold mb-2 text-white">Customer Info</h3>
+                <p className="text-sm text-gray-400">Name: {selectedOrder.user?.name}</p>
+                <p className="text-sm text-gray-400">Email: {selectedOrder.user?.email}</p>
+                <p className="text-sm text-gray-400">Mobile: {selectedOrder.user?.mobile}</p>
               </div>
 
               <div className="mb-4">
-                <h3 className="font-semibold mb-2">Items</h3>
+                <h3 className="font-semibold mb-2 text-white">Items</h3>
                 {selectedOrder.items.map((item, index) => (
                   <div key={index} className="flex justify-between mb-2">
-                    <span>{item.name} x {item.quantity}</span>
-                    <span>₹{item.price * item.quantity}</span>
+                    <span className="text-gray-200">{item.name} x {item.quantity}</span>
+                    <span className="text-csk-yellow">₹{item.price * item.quantity}</span>
                   </div>
                 ))}
               </div>
 
               <div className="mb-4">
-                <h3 className="font-semibold mb-2">Delivery Address</h3>
-                <p className="text-sm text-gray-600">
+                <h3 className="font-semibold mb-2 text-white">Delivery Address</h3>
+                <p className="text-sm text-gray-400">
                   {selectedOrder.address.fullAddress}, {selectedOrder.address.area}, {selectedOrder.address.city} - {selectedOrder.address.pincode}
                 </p>
-                <p className="text-sm text-gray-600">Mobile: {selectedOrder.address.mobile}</p>
+                <p className="text-sm text-gray-400">Mobile: {selectedOrder.address.mobile}</p>
               </div>
 
               <div className="mb-4">
-                <h3 className="font-semibold mb-2">Update Status</h3>
+                <h3 className="font-semibold mb-2 text-white">Update Status</h3>
                 <select
                   value={selectedOrder.status}
                   onChange={(e) => updateOrderStatus(selectedOrder._id, e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  className="w-full px-4 py-3 border border-white/10 rounded-lg bg-[#0f0f14] text-white focus:ring-2 focus:ring-csk-yellow/70 focus:border-transparent"
                 >
                   <option value="placed">Placed</option>
                   <option value="preparing">Preparing</option>
@@ -214,10 +214,10 @@ const AdminOrders = () => {
 
               {!selectedOrder.deliveryPartner && selectedOrder.status === 'preparing' && (
                 <div className="mb-4">
-                  <h3 className="font-semibold mb-2">Assign Delivery Partner</h3>
+                  <h3 className="font-semibold mb-2 text-white">Assign Delivery Partner</h3>
                   <select
                     onChange={(e) => assignDeliveryPartner(selectedOrder._id, e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    className="w-full px-4 py-3 border border-white/10 rounded-lg bg-[#0f0f14] text-white focus:ring-2 focus:ring-csk-yellow/70 focus:border-transparent"
                   >
                     <option value="">Select Delivery Partner</option>
                     {deliveryPartners.map((partner) => (
@@ -231,9 +231,9 @@ const AdminOrders = () => {
 
               {selectedOrder.deliveryPartner && (
                 <div className="mb-4">
-                  <h3 className="font-semibold mb-2">Delivery Partner</h3>
-                  <p className="text-sm text-gray-600">Name: {selectedOrder.deliveryPartner.name}</p>
-                  <p className="text-sm text-gray-600">Phone: {selectedOrder.deliveryPartner.phone}</p>
+                  <h3 className="font-semibold mb-2 text-white">Delivery Partner</h3>
+                  <p className="text-sm text-gray-400">Name: {selectedOrder.deliveryPartner.name}</p>
+                  <p className="text-sm text-gray-400">Phone: {selectedOrder.deliveryPartner.phone}</p>
                 </div>
               )}
             </div>

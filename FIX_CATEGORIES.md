@@ -1,4 +1,4 @@
-# 🔧 FIX: Update Categories to Spice Levels
+# 🔧 FIX: Update Categories to Food Categories
 
 ## ⚠️ Problem
 Your code files are updated, but your **database still has old categories**.
@@ -30,15 +30,16 @@ npm run update:categories
 
 🗑️  Deleted X old category/categories
 
-🧹 Cleaned up any existing spice level categories
+🧹 Cleaned up any existing food categories
 
-📝 Creating new spice level categories...
+📝 Creating new food categories...
 
-  ✅ Created: Spice Level 1
-  ✅ Created: Spice Level 2
-  ✅ Created: Spice Level 3
+  ✅ Created: Shawarma
+  ✅ Created: Kebab
+  ✅ Created: Barbeque
+  ✅ Created: Beverages
 
-🎉 Success! Total categories in database: 3
+🎉 Success! Total categories in database: 4
 ```
 
 ### 5. Start Backend Again

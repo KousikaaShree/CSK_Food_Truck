@@ -19,15 +19,16 @@ npm run update:categories
 
 🗑️  Deleted X old category/categories
 
-🧹 Cleaned up any existing spice level categories
+🧹 Cleaned up any existing food categories
 
-📝 Creating new spice level categories...
+📝 Creating new food categories...
 
-  ✅ Created: Spice Level 1
-  ✅ Created: Spice Level 2
-  ✅ Created: Spice Level 3
+  ✅ Created: Shawarma
+  ✅ Created: Kebab
+  ✅ Created: Barbeque
+  ✅ Created: Beverages
 
-🎉 Success! Total categories in database: 3
+🎉 Success! Total categories in database: 4
 ```
 
 ### Step 2: Verify Backend Server is Running
@@ -96,9 +97,10 @@ Once categories are seeded:
 1. Refresh the admin menu page
 2. Click "Add Food Item"
 3. Category dropdown should show:
-   - Spice Level 1
-   - Spice Level 2
-   - Spice Level 3
+   - Shawarma
+   - Kebab
+   - Barbeque
+   - Beverages
 
 ## 📝 Manual Verification
 
@@ -113,9 +115,10 @@ curl http://localhost:5000/api/admin/categories \
 Should return:
 ```json
 [
-  {"_id":"...","name":"Spice Level 1","description":"..."},
-  {"_id":"...","name":"Spice Level 2","description":"..."},
-  {"_id":"...","name":"Spice Level 3","description":"..."}
+  {"_id":"...","name":"Shawarma","description":"..."},
+  {"_id":"...","name":"Kebab","description":"..."},
+  {"_id":"...","name":"Barbeque","description":"..."},
+  {"_id":"...","name":"Beverages","description":"..."}
 ]
 ```
 

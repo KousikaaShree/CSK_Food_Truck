@@ -27,13 +27,13 @@ const UserDashboard = () => {
 
   const getStatusColor = (status) => {
     const colors = {
-      placed: 'bg-blue-100 text-blue-800',
-      preparing: 'bg-yellow-100 text-yellow-800',
-      out_for_delivery: 'bg-purple-100 text-purple-800',
-      delivered: 'bg-green-100 text-green-800',
-      cancelled: 'bg-red-100 text-red-800'
+      placed: 'bg-csk-yellow/20 text-csk-yellow',
+      preparing: 'bg-csk-yellow/30 text-csk-yellow',
+      out_for_delivery: 'bg-csk-yellow/20 text-csk-yellow',
+      delivered: 'bg-csk-yellow/20 text-csk-yellow',
+      cancelled: 'bg-gray-500/20 text-gray-300'
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return colors[status] || 'bg-gray-500/20 text-gray-300';
   };
 
   const mapContainerStyle = {
@@ -53,20 +53,20 @@ const UserDashboard = () => {
     : { lat: 28.6139, lng: 77.2090 }; // Default to Delhi
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#0b0b0e] via-[#0f0f14] to-[#0b0b0e] text-white">Loading...</div>;
   }
 
   return (
-    <div className="min-h-screen py-12 px-4">
+    <div className="min-h-screen py-12 px-4 bg-gradient-to-b from-[#0b0b0e] via-[#0f0f14] to-[#0b0b0e] text-white">
       <div className="container mx-auto max-w-6xl">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8">My Orders</h1>
+        <h1 className="text-3xl font-bold text-csk-yellow mb-8">My Orders</h1>
 
         {orders.length === 0 ? (
           <div className="text-center py-12">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">No orders yet</h2>
+            <h2 className="text-2xl font-bold text-white mb-4">No orders yet</h2>
             <Link
               to="/"
-              className="bg-primary-500 text-white px-6 py-3 rounded-lg hover:bg-primary-600 transition"
+              className="bg-csk-yellow text-[#0b0b0f] px-6 py-3 rounded-lg hover:bg-csk-yellowSoft transition font-semibold shadow-soft ring-1 ring-csk-yellow/60"
             >
               Start Shopping
             </Link>
@@ -77,13 +77,13 @@ const UserDashboard = () => {
               {orders.map((order) => (
                 <div
                   key={order._id}
-                  className="bg-white rounded-2xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition"
+                  className="bg-[#14151a] rounded-2xl shadow-soft ring-1 ring-white/10 p-6 cursor-pointer hover:shadow-lift hover:ring-csk-yellow/60 transition"
                   onClick={() => setSelectedOrder(order)}
                 >
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <h3 className="font-bold text-gray-800">Order #{order.orderId}</h3>
-                      <p className="text-sm text-gray-600">
+                      <h3 className="font-bold text-white">Order #{order.orderId}</h3>
+                      <p className="text-sm text-gray-300">
                         {new Date(order.createdAt).toLocaleDateString()}
                       </p>
                     </div>
@@ -94,20 +94,20 @@ const UserDashboard = () => {
 
                   <div className="space-y-2 mb-4">
                     {order.items.slice(0, 2).map((item, index) => (
-                      <div key={index} className="flex justify-between text-sm">
+                      <div key={index} className="flex justify-between text-sm text-gray-200">
                         <span>{item.name} x {item.quantity}</span>
-                        <span>₹{item.price * item.quantity}</span>
+                        <span className="text-csk-yellow">₹{item.price * item.quantity}</span>
                       </div>
                     ))}
                     {order.items.length > 2 && (
-                      <p className="text-sm text-gray-500">+{order.items.length - 2} more items</p>
+                      <p className="text-sm text-gray-400">+{order.items.length - 2} more items</p>
                     )}
                   </div>
 
-                  <div className="flex justify-between items-center pt-4 border-t">
-                    <span className="font-bold text-lg">Total: ₹{order.total.toFixed(2)}</span>
+                  <div className="flex justify-between items-center pt-4 border-t border-white/10">
+                    <span className="font-bold text-lg text-white">Total: <span className="text-csk-yellow">₹{order.total.toFixed(2)}</span></span>
                     {order.deliveryPartner && (
-                      <span className="text-sm text-gray-600">
+                      <span className="text-sm text-gray-300">
                         Delivery: {order.deliveryPartner.name}
                       </span>
                     )}
@@ -117,37 +117,37 @@ const UserDashboard = () => {
             </div>
 
             {selectedOrder && (
-              <div className="bg-white rounded-2xl shadow-lg p-6">
-                <h2 className="text-xl font-bold text-gray-800 mb-4">Order Details</h2>
+              <div className="bg-[#14151a] rounded-2xl shadow-soft ring-1 ring-white/10 p-6">
+                <h2 className="text-xl font-bold text-csk-yellow mb-4">Order Details</h2>
                 
                 <div className="mb-4">
-                  <h3 className="font-semibold mb-2">Items</h3>
+                  <h3 className="font-semibold mb-2 text-white">Items</h3>
                   {selectedOrder.items.map((item, index) => (
-                    <div key={index} className="flex justify-between mb-2">
-                      <span>{item.name} x {item.quantity}</span>
-                      <span>₹{item.price * item.quantity}</span>
+                    <div key={index} className="flex justify-between mb-2 text-sm">
+                      <span className="text-gray-200">{item.name} x {item.quantity}</span>
+                      <span className="text-csk-yellow">₹{item.price * item.quantity}</span>
                     </div>
                   ))}
                 </div>
 
                 <div className="mb-4">
-                  <h3 className="font-semibold mb-2">Delivery Address</h3>
-                  <p className="text-sm text-gray-600">
+                  <h3 className="font-semibold mb-2 text-white">Delivery Address</h3>
+                  <p className="text-sm text-gray-300">
                     {selectedOrder.address.fullAddress}, {selectedOrder.address.area}, {selectedOrder.address.city} - {selectedOrder.address.pincode}
                   </p>
                 </div>
 
                 {selectedOrder.deliveryPartner && (
                   <div className="mb-4">
-                    <h3 className="font-semibold mb-2">Delivery Partner</h3>
-                    <p className="text-sm text-gray-600">Name: {selectedOrder.deliveryPartner.name}</p>
-                    <p className="text-sm text-gray-600">Phone: {selectedOrder.deliveryPartner.phone}</p>
+                    <h3 className="font-semibold mb-2 text-white">Delivery Partner</h3>
+                    <p className="text-sm text-gray-300">Name: {selectedOrder.deliveryPartner.name}</p>
+                    <p className="text-sm text-gray-300">Phone: {selectedOrder.deliveryPartner.phone}</p>
                   </div>
                 )}
 
                 {selectedOrder.status === 'out_for_delivery' && selectedOrder.deliveryPartner?.currentLocation && isLoaded && (
                   <div className="mt-4">
-                    <h3 className="font-semibold mb-2">Live Tracking</h3>
+                    <h3 className="font-semibold mb-2 text-white">Live Tracking</h3>
                     <GoogleMap
                       mapContainerStyle={mapContainerStyle}
                       center={center}
@@ -158,8 +158,8 @@ const UserDashboard = () => {
                   </div>
                 )}
                 {selectedOrder.status === 'out_for_delivery' && !isLoaded && (
-                  <div className="mt-4 p-4 bg-gray-100 rounded">
-                    <p className="text-sm text-gray-600">Loading map...</p>
+                  <div className="mt-4 p-4 bg-[#0f0f14] rounded-lg ring-1 ring-white/10">
+                    <p className="text-sm text-gray-300">Loading map...</p>
                   </div>
                 )}
               </div>

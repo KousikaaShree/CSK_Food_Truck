@@ -5,9 +5,10 @@ const Category = require('../models/Category');
 dotenv.config();
 
 const categories = [
-  { name: 'Spice Level 1', description: 'Mild spice level - Perfect for those who prefer gentle flavors' },
-  { name: 'Spice Level 2', description: 'Medium spice level - Balanced heat with great flavor' },
-  { name: 'Spice Level 3', description: 'Hot spice level - For spice lovers who enjoy intense flavors' }
+  { name: 'Shawarma', description: 'Delicious Middle Eastern wraps with marinated meats and fresh vegetables' },
+  { name: 'Kebab', description: 'Grilled skewers of seasoned meats, perfect for sharing' },
+  { name: 'Barbeque', description: 'Smoky grilled meats and vegetables with authentic BBQ flavors' },
+  { name: 'Beverages', description: 'Refreshing drinks including juices, sodas, and specialty beverages' }
 ];
 
 async function clearAndReseedCategories() {
@@ -25,7 +26,7 @@ async function clearAndReseedCategories() {
       console.log(`✅ Created category: ${category.name}`);
     }
 
-    console.log('\n🎉 Categories reseeded successfully with Spice Levels!');
+    console.log('\n🎉 Categories reseeded successfully with Food Categories!');
     console.log(`Total categories: ${await Category.countDocuments()}`);
     process.exit(0);
   } catch (error) {

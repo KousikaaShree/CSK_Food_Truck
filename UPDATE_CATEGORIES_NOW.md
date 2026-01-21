@@ -1,4 +1,4 @@
-# 🔥 Update Categories to Spice Levels - QUICK GUIDE
+# 🔥 Update Categories to Food Categories - QUICK GUIDE
 
 ## ✅ The Fix is Ready!
 
@@ -22,20 +22,22 @@ You should see:
 
 🗑️  Deleted X old category/categories
 
-🧹 Cleaned up any existing spice level categories
+🧹 Cleaned up any existing food categories
 
-📝 Creating new spice level categories...
+📝 Creating new food categories...
 
-  ✅ Created: Spice Level 1
-  ✅ Created: Spice Level 2
-  ✅ Created: Spice Level 3
+  ✅ Created: Shawarma
+  ✅ Created: Kebab
+  ✅ Created: Barbeque
+  ✅ Created: Beverages
 
-🎉 Success! Total categories in database: 3
+🎉 Success! Total categories in database: 4
 
 Your categories are now:
-  1. Spice Level 1
-  2. Spice Level 2
-  3. Spice Level 3
+  1. Barbeque
+  2. Beverages
+  3. Kebab
+  4. Shawarma
 ```
 
 ### Step 4: Restart your backend server
@@ -48,22 +50,23 @@ npm run dev
 2. Click "Add Food Item"
 3. Check the Category dropdown
 4. You should see:
-   - Spice Level 1
-   - Spice Level 2
-   - Spice Level 3
+   - Shawarma
+   - Kebab
+   - Barbeque
+   - Beverages
 
 ## 📝 What This Script Does
 
 1. ✅ Connects to MongoDB
-2. ✅ Deletes old categories (Biryani, Momos, Wraps, etc.)
-3. ✅ Cleans up any existing spice levels (to avoid duplicates)
-4. ✅ Creates the 3 new spice level categories
+2. ✅ Deletes old categories (Spice Levels, Biryani, Momos, Wraps, etc.)
+3. ✅ Cleans up any existing food categories (to avoid duplicates)
+4. ✅ Creates the 4 new food categories
 5. ✅ Shows you the final result
 
 ## ⚠️ Important Notes
 
 - **Backend server must be stopped** when running this script
-- **Existing foods**: If you have foods assigned to old categories, you'll need to reassign them to spice levels in the admin panel
+- **Existing foods**: If you have foods assigned to old categories, you'll need to reassign them to food categories in the admin panel
 - **No data loss**: Only categories are changed, your foods are safe
 
 ## 🔄 Alternative: Manual Update
@@ -86,9 +89,9 @@ If the script doesn't work, you can also:
 
 After running the script, verify:
 
-1. **Backend**: Check terminal output shows 3 categories created
-2. **Admin Panel**: Category dropdown shows spice levels
-3. **User Website**: Home page filters show spice levels
+1. **Backend**: Check terminal output shows 4 categories created
+2. **Admin Panel**: Category dropdown shows food categories
+3. **User Website**: Home page filters show food categories
 
 ---
 

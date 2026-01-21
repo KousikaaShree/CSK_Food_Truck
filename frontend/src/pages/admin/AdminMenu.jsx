@@ -15,7 +15,7 @@ const AdminMenu = () => {
     price: '',
     category: '',
     available: true,
-    popular: false
+    bestseller: false
   });
 
   useEffect(() => {
@@ -42,9 +42,12 @@ const AdminMenu = () => {
         headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
       });
       console.log('Categories fetched:', res.data);
-      setCategories(res.data || []);
-      if (!res.data || res.data.length === 0) {
-        console.warn('No categories found in database. Please run: npm run update:categories in backend folder');
+      // Filter to only allow: Shawarma, Kebab, Barbeque, Beverages
+      const allowedCategories = ['Shawarma', 'Kebab', 'Barbeque', 'Beverages'];
+      const filtered = (res.data || []).filter(cat => allowedCategories.includes(cat.name));
+      setCategories(filtered);
+      if (filtered.length === 0) {
+        console.warn('No valid categories found. Please ensure categories are seeded: Shawarma, Kebab, Barbeque, Beverages');
       }
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -57,7 +60,12 @@ const AdminMenu = () => {
     const formDataToSend = new FormData();
     Object.keys(formData).forEach(key => {
       if (key !== 'image') {
-        formDataToSend.append(key, formData[key]);
+        if (key === 'bestseller') {
+          // Map bestseller to popular for backend compatibility
+          formDataToSend.append('popular', formData[key]);
+        } else {
+          formDataToSend.append(key, formData[key]);
+        }
       }
     });
     if (formData.image) {
@@ -88,7 +96,7 @@ const AdminMenu = () => {
         price: '',
         category: '',
         available: true,
-        popular: false
+        bestseller: false
       });
       fetchFoods();
     } catch (error) {
@@ -110,7 +118,7 @@ const AdminMenu = () => {
       price: food.price,
       category: food.category._id || food.category,
       available: food.available,
-      popular: food.popular
+      bestseller: food.popular || food.bestseller || false
     });
     setShowModal(true);
   };
@@ -130,23 +138,34 @@ const AdminMenu = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-md">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/admin/dashboard" className="text-2xl font-bold text-primary-600">
-              Admin Panel
-            </Link>
-            <Link to="/admin/dashboard" className="text-gray-700 hover:text-primary-600">
-              Back to Dashboard
-            </Link>
-          </div>
+    <div className="min-h-screen bg-gradient-to-b from-[#0b0b0e] via-[#0f0f14] to-[#0b0b0e] text-white">
+      <nav className="bg-gradient-to-r from-[#0d0d10]/95 via-[#111118]/95 to-[#0b0b0f]/95 shadow-soft backdrop-blur">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <Link to="/admin/dashboard" className="flex items-center gap-3">
+            <img
+              src="/csk-logo.png"
+              alt="CSK Food Truck logo"
+              className="h-9 w-auto object-contain"
+            />
+            <div className="leading-tight">
+              <div className="font-heading text-xl font-bold text-white">
+                CSK Food Truck
+              </div>
+              <div className="text-xs text-white/70">Admin Panel</div>
+            </div>
+          </Link>
+          <Link
+            to="/admin/dashboard"
+            className="text-sm font-medium text-gray-100/85 hover:text-csk-yellow transition"
+          >
+            Back to Dashboard
+          </Link>
         </div>
       </nav>
 
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-800">Menu Management</h1>
+          <h1 className="text-3xl font-bold text-csk-yellow">Menu Management</h1>
           <button
             onClick={() => {
               setEditingFood(null);
@@ -161,7 +180,7 @@ const AdminMenu = () => {
               fetchCategories(); // Refresh categories when opening modal
               setShowModal(true);
             }}
-            className="bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition flex items-center gap-2"
+            className="bg-csk-yellow text-[#0b0b0f] px-4 py-2 rounded-lg hover:bg-csk-yellowSoft transition flex items-center gap-2 font-semibold shadow-soft ring-1 ring-csk-yellow/60"
           >
             <FiPlus /> Add Food Item
           </button>
@@ -172,27 +191,33 @@ const AdminMenu = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {foods.map((food) => (
-              <div key={food._id} className="bg-white rounded-2xl shadow-lg overflow-hidden">
-                <img src={food.image} alt={food.name} className="w-full h-48 object-cover" />
+              <div
+                key={food._id}
+                className="bg-[#14151a] rounded-2xl shadow-soft ring-1 ring-white/10 overflow-hidden hover:ring-csk-yellow/60 transition"
+              >
+                <div className="relative overflow-hidden">
+                  <div className="absolute inset-0 ring-2 ring-transparent hover:ring-csk-yellow/70 transition" />
+                  <img src={food.image} alt={food.name} className="w-full h-48 object-cover transition duration-300 hover:scale-[1.02]" />
+                </div>
                 <div className="p-4">
-                  <h3 className="text-xl font-semibold text-gray-800 mb-2">{food.name}</h3>
-                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">{food.description}</p>
+                  <h3 className="text-xl font-semibold text-white mb-2">{food.name}</h3>
+                  <p className="text-gray-300 text-sm mb-3 line-clamp-2">{food.description}</p>
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-2xl font-bold text-primary-600">₹{food.price}</span>
-                    <span className={`px-2 py-1 rounded text-xs ${food.available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    <span className="text-2xl font-bold text-csk-yellow">₹{food.price}</span>
+                    <span className={`px-2 py-1 rounded-full text-xs ${food.available ? 'bg-csk-yellow/15 text-csk-yellow' : 'bg-[#18181f] text-gray-300'}`}>
                       {food.available ? 'Available' : 'Unavailable'}
                     </span>
                   </div>
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleEdit(food)}
-                      className="flex-1 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition flex items-center justify-center gap-2"
+                      className="flex-1 bg-csk-yellow text-[#0b0b0f] px-4 py-2 rounded-lg hover:bg-csk-yellowSoft transition flex items-center justify-center gap-2 font-semibold ring-1 ring-csk-yellow/60"
                     >
                       <FiEdit /> Edit
                     </button>
                     <button
                       onClick={() => handleDelete(food._id)}
-                      className="flex-1 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition flex items-center justify-center gap-2"
+                      className="flex-1 bg-[#18181f] text-gray-200 px-4 py-2 rounded-lg hover:bg-[#23232c] transition flex items-center justify-center gap-2"
                     >
                       <FiTrash2 /> Delete
                     </button>
@@ -205,55 +230,55 @@ const AdminMenu = () => {
 
         {showModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">
+            <div className="bg-[#14151a] rounded-2xl p-6 max-w-md w-full mx-4 ring-1 ring-white/10 shadow-soft">
+              <h2 className="text-2xl font-bold text-csk-yellow mb-4">
                 {editingFood ? 'Edit Food Item' : 'Add Food Item'}
               </h2>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-gray-700 mb-2">Name</label>
+                  <label className="block text-gray-200 mb-2">Name</label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    className="w-full px-4 py-3 border border-white/10 rounded-lg bg-[#0f0f14] text-white placeholder:text-gray-500 focus:ring-2 focus:ring-csk-yellow/70 focus:border-transparent"
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 mb-2">Description</label>
+                  <label className="block text-gray-200 mb-2">Description</label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     required
                     rows="3"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    className="w-full px-4 py-3 border border-white/10 rounded-lg bg-[#0f0f14] text-white placeholder:text-gray-500 focus:ring-2 focus:ring-csk-yellow/70 focus:border-transparent"
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 mb-2">Price</label>
+                  <label className="block text-gray-200 mb-2">Price</label>
                   <input
                     type="number"
                     step="0.01"
                     value={formData.price}
                     onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    className="w-full px-4 py-3 border border-white/10 rounded-lg bg-[#0f0f14] text-white placeholder:text-gray-500 focus:ring-2 focus:ring-csk-yellow/70 focus:border-transparent"
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 mb-2 font-medium">Category</label>
+                  <label className="block text-gray-200 mb-2 font-medium">Category</label>
                   {categories.length === 0 ? (
-                    <div className="w-full px-4 py-3 border-2 border-yellow-300 bg-yellow-50 rounded-lg">
-                      <p className="text-yellow-800 text-sm font-semibold mb-1">⚠️ No categories found!</p>
-                      <p className="text-yellow-700 text-xs">
+                    <div className="w-full px-4 py-3 border-2 border-csk-yellow/60 bg-[#18181f] rounded-lg">
+                      <p className="text-csk-yellow text-sm font-semibold mb-1">⚠️ No categories found!</p>
+                      <p className="text-gray-300 text-xs">
                         Please run this command in backend folder: 
-                        <code className="bg-yellow-200 px-2 py-1 rounded ml-1">npm run update:categories</code>
+                        <code className="bg-csk-yellow/20 px-2 py-1 rounded ml-1">npm run update:categories</code>
                       </p>
                       <button
                         type="button"
                         onClick={fetchCategories}
-                        className="mt-2 text-sm text-yellow-800 underline hover:text-yellow-900"
+                        className="mt-2 text-sm text-csk-yellow underline hover:text-csk-yellow/80"
                       >
                         Click here to refresh
                       </button>
@@ -263,7 +288,7 @@ const AdminMenu = () => {
                       value={formData.category}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                       required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-white/10 rounded-lg bg-[#0f0f14] text-white focus:ring-2 focus:ring-csk-yellow/70 focus:border-transparent"
                     >
                       <option value="">Select Category</option>
                       {categories.map((cat) => (
@@ -273,37 +298,48 @@ const AdminMenu = () => {
                   )}
                 </div>
                 <div>
-                  <label className="block text-gray-700 mb-2">Image</label>
+                  <label className="block text-gray-200 mb-2">Image</label>
                   <input
                     type="file"
                     accept="image/*"
                     onChange={(e) => setFormData({ ...formData, image: e.target.files[0] })}
                     required={!editingFood}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    className="w-full px-4 py-3 border border-white/10 rounded-lg bg-[#0f0f14] text-white focus:ring-2 focus:ring-csk-yellow/70 focus:border-transparent"
                   />
                 </div>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2">
+                <div className="flex gap-4 flex-wrap">
+                  <label className="flex items-center gap-2 text-sm text-gray-200">
                     <input
                       type="checkbox"
                       checked={formData.available}
                       onChange={(e) => setFormData({ ...formData, available: e.target.checked })}
+                      className="w-4 h-4 rounded border-white/20 bg-[#0f0f14] text-csk-yellow focus:ring-csk-yellow/70"
                     />
-                    Available
+                    ✅ Available
                   </label>
-                  <label className="flex items-center gap-2">
+                  <label className="flex items-center gap-2 text-sm text-gray-200">
                     <input
                       type="checkbox"
-                      checked={formData.popular}
-                      onChange={(e) => setFormData({ ...formData, popular: e.target.checked })}
+                      checked={!formData.available}
+                      onChange={(e) => setFormData({ ...formData, available: !e.target.checked })}
+                      className="w-4 h-4 rounded border-white/20 bg-[#0f0f14] text-csk-yellow focus:ring-csk-yellow/70"
                     />
-                    Popular
+                    ❌ Not Available
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-gray-200">
+                    <input
+                      type="checkbox"
+                      checked={formData.bestseller}
+                      onChange={(e) => setFormData({ ...formData, bestseller: e.target.checked })}
+                      className="w-4 h-4 rounded border-white/20 bg-[#0f0f14] text-csk-yellow focus:ring-csk-yellow/70"
+                    />
+                    ⭐ Bestseller
                   </label>
                 </div>
                 <div className="flex gap-2">
                   <button
                     type="submit"
-                    className="flex-1 bg-primary-500 text-white py-2 rounded-lg hover:bg-primary-600 transition"
+                    className="flex-1 bg-csk-yellow text-[#0b0b0f] py-2 rounded-lg hover:bg-csk-yellowSoft transition font-semibold ring-1 ring-csk-yellow/60"
                   >
                     {editingFood ? 'Update' : 'Create'}
                   </button>
@@ -313,7 +349,7 @@ const AdminMenu = () => {
                       setShowModal(false);
                       setEditingFood(null);
                     }}
-                    className="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300 transition"
+                    className="flex-1 bg-[#1d1d25] text-white py-2 rounded-lg hover:bg-[#23232c] transition"
                   >
                     Cancel
                   </button>

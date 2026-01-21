@@ -8,17 +8,17 @@ export default {
     extend: {
       colors: {
         csk: {
-          bg: "#FFF8EE",
-          cream: "#FAF7F2",
-          // Navbar / rich warm brown
-          brown: "#5A3E2B",
-          brownSoft: "#6B4A32",
-          creamText: "#FFF8EE",
-          charcoal: "#222222",
-          text: "#444444",
-          yellow: "#F6C453",
-          yellowSoft: "#FFD369",
-          gold: "#E6B566",
+          // Dark, premium palette with yellow accent
+          bg: "#0B0B0E",
+          cream: "#14151A",
+          brown: "#121013",      // used for navbar backgrounds
+          brownSoft: "#1C1B20",
+          creamText: "#F4F4F5",
+          charcoal: "#EAEAEA",
+          text: "#C7C7CC",
+          yellow: "#F5C400",
+          yellowSoft: "#FFD95A",
+          gold: "#F9D27C",
         },
       },
       fontFamily: {

@@ -5,13 +5,14 @@ const Category = require('../models/Category');
 dotenv.config();
 
 const newCategories = [
-  { name: 'Spice Level 1', description: 'Mild spice level - Perfect for those who prefer gentle flavors' },
-  { name: 'Spice Level 2', description: 'Medium spice level - Balanced heat with great flavor' },
-  { name: 'Spice Level 3', description: 'Hot spice level - For spice lovers who enjoy intense flavors' }
+  { name: 'Shawarma', description: 'Delicious Middle Eastern wraps with marinated meats and fresh vegetables' },
+  { name: 'Kebab', description: 'Grilled skewers of seasoned meats, perfect for sharing' },
+  { name: 'Barbeque', description: 'Smoky grilled meats and vegetables with authentic BBQ flavors' },
+  { name: 'Beverages', description: 'Refreshing drinks including juices, sodas, and specialty beverages' }
 ];
 
 // Old category names to remove (if they exist)
-const oldCategoryNames = ['Biryani', 'Momos', 'Wraps', 'Burgers', 'Dosa', 'Juice'];
+const oldCategoryNames = ['Spice Level 1', 'Spice Level 2', 'Spice Level 3', 'Biryani', 'Momos', 'Wraps', 'Burgers', 'Dosa', 'Juice'];
 
 async function updateToSpiceLevels() {
   try {
@@ -22,12 +23,12 @@ async function updateToSpiceLevels() {
     const deleteResult = await Category.deleteMany({ name: { $in: oldCategoryNames } });
     console.log(`🗑️  Deleted ${deleteResult.deletedCount} old category/categories\n`);
 
-    // Delete existing spice level categories if they exist (to avoid duplicates)
-    await Category.deleteMany({ name: { $regex: /^Spice Level/ } });
-    console.log('🧹 Cleaned up any existing spice level categories\n');
+    // Delete existing food categories if they exist (to avoid duplicates)
+    await Category.deleteMany({ name: { $in: ['Shawarma', 'Kebab', 'Barbeque', 'Beverages'] } });
+    console.log('🧹 Cleaned up any existing food categories\n');
 
-    // Create new spice level categories
-    console.log('📝 Creating new spice level categories...\n');
+    // Create new food categories
+    console.log('📝 Creating new food categories...\n');
     for (const category of newCategories) {
       await Category.create(category);
       console.log(`  ✅ Created: ${category.name}`);

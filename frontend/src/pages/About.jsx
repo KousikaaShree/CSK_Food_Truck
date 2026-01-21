@@ -1,41 +1,41 @@
 const About = () => {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-b from-[#0b0b0e] via-[#0f0f14] to-[#0b0b0e] text-white">
       <section className="container mx-auto px-4 py-12">
         <div className="grid lg:grid-cols-2 gap-10 items-center">
           <div>
-            <h1 className="font-heading text-4xl md:text-5xl font-bold">
+            <h1 className="font-heading text-4xl md:text-5xl font-bold text-csk-yellow">
               About CSK Food Truck
             </h1>
-            <p className="mt-5 text-csk-text">
+            <p className="mt-5 text-gray-300">
               CSK Food Truck – Chicken Shawarma & Kebab is built on one simple idea: serve bold flavors with a calm,
               premium experience. From marination to grilling, we focus on quality ingredients, hygiene, and consistent
               taste—every single time.
             </p>
-            <p className="mt-4 text-csk-text">
+            <p className="mt-4 text-gray-300">
               Whether you’re craving a juicy shawarma, a smoky kebab, or a satisfying combo meal, our menu is crafted to
               feel comforting, filling, and fresh.
             </p>
 
             <div className="mt-8 grid sm:grid-cols-3 gap-4">
-              <div className="bg-white rounded-xl shadow-soft ring-1 ring-black/5 p-5">
-                <div className="text-sm font-semibold text-csk-charcoal">Fresh & Clean</div>
-                <div className="mt-1 text-sm text-csk-text">Hygiene-first prep & packaging.</div>
+              <div className="bg-[#14151a] rounded-xl shadow-soft ring-1 ring-white/10 p-5 hover:ring-csk-yellow/60 transition">
+                <div className="text-sm font-semibold text-white">Fresh & Clean</div>
+                <div className="mt-1 text-sm text-gray-300">Hygiene-first prep & packaging.</div>
               </div>
-              <div className="bg-white rounded-xl shadow-soft ring-1 ring-black/5 p-5">
-                <div className="text-sm font-semibold text-csk-charcoal">Quality Ingredients</div>
-                <div className="mt-1 text-sm text-csk-text">Premium sauces & spice blends.</div>
+              <div className="bg-[#14151a] rounded-xl shadow-soft ring-1 ring-white/10 p-5 hover:ring-csk-yellow/60 transition">
+                <div className="text-sm font-semibold text-white">Quality Ingredients</div>
+                <div className="mt-1 text-sm text-gray-300">Premium sauces & spice blends.</div>
               </div>
-              <div className="bg-white rounded-xl shadow-soft ring-1 ring-black/5 p-5">
-                <div className="text-sm font-semibold text-csk-charcoal">Made to Order</div>
-                <div className="mt-1 text-sm text-csk-text">Hot, juicy, and satisfying.</div>
+              <div className="bg-[#14151a] rounded-xl shadow-soft ring-1 ring-white/10 p-5 hover:ring-csk-yellow/60 transition">
+                <div className="text-sm font-semibold text-white">Made to Order</div>
+                <div className="mt-1 text-sm text-gray-300">Hot, juicy, and satisfying.</div>
               </div>
             </div>
           </div>
 
           <div className="relative">
-            <div className="absolute -inset-2 bg-csk-yellow/20 blur-2xl rounded-[32px]" />
-            <div className="relative bg-white rounded-2xl shadow-soft ring-1 ring-black/5 overflow-hidden">
+            <div className="absolute -inset-3 bg-csk-yellow/15 blur-3xl rounded-[32px]" />
+            <div className="relative bg-[#14151a] rounded-2xl shadow-soft ring-1 ring-white/10 overflow-hidden">
               <img
                 src="https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=1400&q=70"
                 alt="Food preparation"

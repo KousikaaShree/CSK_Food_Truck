@@ -61,7 +61,7 @@ const Checkout = () => {
           contact: formData.mobile
         },
         theme: {
-          color: '#ef4444'
+          color: '#F5C400'
         }
       };
 
@@ -117,85 +117,85 @@ const Checkout = () => {
   };
 
   return (
-    <div className="min-h-screen py-12 px-4">
+    <div className="min-h-screen py-12 px-4 bg-gradient-to-b from-[#0b0b0e] via-[#0f0f14] to-[#0b0b0e] text-white">
       <div className="container mx-auto max-w-4xl">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8">Checkout</h1>
+        <h1 className="text-3xl font-bold text-csk-yellow mb-8">Checkout</h1>
 
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="bg-[#2b1818] border border-[#fca5a5] text-[#fecaca] px-4 py-3 rounded mb-4">
             {error}
           </div>
         )}
 
         <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Delivery Address</h2>
+          <div className="bg-[#14151a] rounded-2xl shadow-soft ring-1 ring-white/10 p-6">
+            <h2 className="text-xl font-bold text-white mb-4">Delivery Address</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-gray-700 mb-2">Full Address</label>
+                <label className="block text-gray-200 mb-2">Full Address</label>
                 <textarea
                   name="fullAddress"
                   value={formData.fullAddress}
                   onChange={handleChange}
                   required
                   rows="3"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-4 py-2 border border-white/10 rounded-lg bg-[#0f0f14] text-white placeholder:text-gray-500 focus:ring-2 focus:ring-csk-yellow/70 focus:border-transparent"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-gray-700 mb-2">City</label>
+                  <label className="block text-gray-200 mb-2">City</label>
                   <input
                     type="text"
                     name="city"
                     value={formData.city}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-4 py-2 border border-white/10 rounded-lg bg-[#0f0f14] text-white placeholder:text-gray-500 focus:ring-2 focus:ring-csk-yellow/70 focus:border-transparent"
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 mb-2">Area</label>
+                  <label className="block text-gray-200 mb-2">Area</label>
                   <input
                     type="text"
                     name="area"
                     value={formData.area}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-4 py-2 border border-white/10 rounded-lg bg-[#0f0f14] text-white placeholder:text-gray-500 focus:ring-2 focus:ring-csk-yellow/70 focus:border-transparent"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-gray-700 mb-2">Pincode</label>
+                  <label className="block text-gray-200 mb-2">Pincode</label>
                   <input
                     type="text"
                     name="pincode"
                     value={formData.pincode}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-4 py-2 border border-white/10 rounded-lg bg-[#0f0f14] text-white placeholder:text-gray-500 focus:ring-2 focus:ring-csk-yellow/70 focus:border-transparent"
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 mb-2">Mobile</label>
+                  <label className="block text-gray-200 mb-2">Mobile</label>
                   <input
                     type="tel"
                     name="mobile"
                     value={formData.mobile}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-4 py-2 border border-white/10 rounded-lg bg-[#0f0f14] text-white placeholder:text-gray-500 focus:ring-2 focus:ring-csk-yellow/70 focus:border-transparent"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-gray-700 mb-2">Payment Method</label>
-                <div className="space-y-2">
+                <label className="block text-gray-200 mb-2">Payment Method</label>
+                <div className="space-y-2 text-sm text-gray-200">
                   <label className="flex items-center gap-2">
                     <input
                       type="radio"
@@ -222,27 +222,27 @@ const Checkout = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-primary-500 text-white py-3 rounded-lg hover:bg-primary-600 transition disabled:opacity-50"
+                className="w-full bg-csk-yellow text-[#0b0b0f] py-3 rounded-lg hover:bg-csk-yellowSoft transition disabled:opacity-50 font-semibold shadow-soft ring-1 ring-csk-yellow/60"
               >
                 {loading ? 'Processing...' : 'Place Order'}
               </button>
             </form>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Order Summary</h2>
+          <div className="bg-[#14151a] rounded-2xl shadow-soft ring-1 ring-white/10 p-6">
+            <h2 className="text-xl font-bold text-white mb-4">Order Summary</h2>
             <div className="space-y-2 mb-4">
               <div className="flex justify-between">
-                <span className="text-gray-600">Subtotal</span>
-                <span className="font-semibold">₹{subtotal.toFixed(2)}</span>
+              <span className="text-gray-400">Subtotal</span>
+              <span className="font-semibold text-gray-100">₹{subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Tax (18% GST)</span>
-                <span className="font-semibold">₹{tax.toFixed(2)}</span>
+              <span className="text-gray-400">Tax (18% GST)</span>
+              <span className="font-semibold text-gray-100">₹{tax.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-xl font-bold pt-4 border-t">
+              <div className="flex justify-between text-xl font-bold pt-4 border-t border-white/10">
                 <span>Total</span>
-                <span className="text-primary-600">₹{total.toFixed(2)}</span>
+                <span className="text-csk-yellow">₹{total.toFixed(2)}</span>
               </div>
             </div>
           </div>
