@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 
 const FoodJourney = () => {
   const containerRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const observerOptions = {
@@ -12,53 +13,53 @@ const FoodJourney = () => {
     };
 
     const foodItems = document.querySelectorAll('.food-item');
-    
+
     const createFlourPath = (fromElement, toElement) => {
       const fromRect = fromElement.querySelector('.plate-circle').getBoundingClientRect();
       const toRect = toElement.querySelector('.plate-circle').getBoundingClientRect();
-      
+
       const container = containerRef.current;
       if (!container) return;
-      
+
       const containerRect = container.getBoundingClientRect();
-      
+
       const fromY = fromRect.bottom - containerRect.top;
       const toY = toRect.top - containerRect.top;
       const distance = toY - fromY;
-      
+
       const particleCount = 15;
-      
+
       for (let i = 0; i < particleCount; i++) {
         const particle = document.createElement('div');
         particle.className = 'flour-particle-path';
-        
+
         const size = Math.random() * 6 + 3;
         particle.style.width = size + 'px';
         particle.style.height = size + 'px';
-        
+
         const progress = i / particleCount;
         const yPos = fromY + (distance * progress);
-        
+
         const xOffset = Math.sin(progress * Math.PI * 2) * 30;
         const xPos = 50;
-        
+
         particle.style.position = 'absolute';
         particle.style.top = yPos + 'px';
         particle.style.left = `calc(${xPos}% + ${xOffset}px)`;
         particle.style.animationDelay = (i * 0.05) + 's';
-        
+
         container.appendChild(particle);
       }
     };
-    
+
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           entry.target.classList.add('visible');
-          
+
           setTimeout(() => {
             entry.target.classList.add('rotate-active');
-            
+
             const currentIndex = parseInt(entry.target.dataset.index);
             if (currentIndex < foodItems.length - 1) {
               createFlourPath(entry.target, foodItems[currentIndex + 1]);
@@ -89,15 +90,15 @@ const FoodJourney = () => {
       {/* Food Item 1 - Left */}
       <div className="food-item left" data-index="0">
         <div className="plate-circle">
-          <img 
-            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23f5f5f5' width='300' height='300'/%3E%3Ccircle cx='150' cy='130' r='50' fill='%23ff6b6b'/%3E%3Ccircle cx='150' cy='180' r='35' fill='%23feca57'/%3E%3Cpath d='M 120 100 Q 150 80 180 100' stroke='%234ecdc4' stroke-width='3' fill='none'/%3E%3Ccircle cx='140' cy='140' r='5' fill='%23fff'/%3E%3Ccircle cx='160' cy='135' r='4' fill='%23fff'/%3E%3C/svg%3E" 
-            alt="Appetizer" 
+          <img
+            src="/appetizer.png"
+            alt="Appetizer"
             className="plate-image"
           />
         </div>
         <div className="food-content">
           <h2 className="food-title">Appetizer</h2>
-          <p className="food-description">Start your culinary journey with a delightful appetizer to awaken your taste buds</p>
+          <p className="food-description">Start with our fresh baked bread with an egg and basil on top</p>
         </div>
         <div className="flour-decoration">
           <div className="flour-dot" style={{ width: '4px', height: '4px', top: '20px', left: '-30px' }}></div>
@@ -109,15 +110,15 @@ const FoodJourney = () => {
       {/* Food Item 2 - Right */}
       <div className="food-item right" data-index="1">
         <div className="plate-circle">
-          <img 
-            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23f5f5f5' width='300' height='300'/%3E%3Cellipse cx='150' cy='140' rx='60' ry='40' fill='%23ff8c42'/%3E%3Cellipse cx='130' cy='180' rx='30' ry='12' fill='%2334a853'/%3E%3Cellipse cx='170' cy='185' rx='28' ry='10' fill='%234caf50'/%3E%3Ccircle cx='130' cy='165' r='6' fill='%23d32f2f'/%3E%3Ccircle cx='160' cy='168' r='5' fill='%23ff6f00'/%3E%3Cpath d='M 200 130 Q 210 120 220 130' stroke='%23ffd700' stroke-width='2' fill='none'/%3E%3C/svg%3E" 
-            alt="Main Course" 
+          <img
+            src="/steak.png"
+            alt="Main Dish"
             className="plate-image"
           />
         </div>
         <div className="food-content">
-          <h2 className="food-title">Main Course</h2>
-          <p className="food-description">Savor the perfectly cooked main dish with fresh accompaniments and rich flavors</p>
+          <h2 className="food-title">Main Dish</h2>
+          <p className="food-description">Our juicy fresh grilled Steak is served to satisfy your appetite</p>
         </div>
         <div className="flour-decoration">
           <div className="flour-dot" style={{ width: '5px', height: '5px', top: '30px', right: '-35px' }}></div>
@@ -129,15 +130,15 @@ const FoodJourney = () => {
       {/* Food Item 3 - Left */}
       <div className="food-item left" data-index="2">
         <div className="plate-circle">
-          <img 
-            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23f5f5f5' width='300' height='300'/%3E%3Cellipse cx='140' cy='170' rx='40' ry='15' fill='%2334a853'/%3E%3Cellipse cx='160' cy='175' rx='35' ry='12' fill='%234caf50'/%3E%3Cellipse cx='180' cy='170' rx='30' ry='10' fill='%2366bb6a'/%3E%3Ccircle cx='130' cy='155' r='7' fill='%23d32f2f'/%3E%3Ccircle cx='165' cy='158' r='6' fill='%23ff6f00'/%3E%3Ccircle cx='185' cy='160' r='5' fill='%23ffd700'/%3E%3Cpath d='M 210 140 Q 220 130 230 140' stroke='%23ffd700' stroke-width='2' fill='none'/%3E%3C/svg%3E" 
-            alt="Side Dish" 
+          <img
+            src="/salad.png"
+            alt="Side Dish"
             className="plate-image"
           />
         </div>
         <div className="food-content">
           <h2 className="food-title">Side Dish</h2>
-          <p className="food-description">A healthy salad mixed with light sliced meat to complement your meal</p>
+          <p className="food-description">Have a healthy salad mixed with light sliced meat to complement your steak</p>
         </div>
         <div className="flour-decoration">
           <div className="flour-dot" style={{ width: '4px', height: '4px', top: '25px', left: '-28px' }}></div>
@@ -149,15 +150,15 @@ const FoodJourney = () => {
       {/* Food Item 4 - Right */}
       <div className="food-item right" data-index="3">
         <div className="plate-circle">
-          <img 
-            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23f5f5f5' width='300' height='300'/%3E%3Cpath d='M 120 140 L 180 140 L 172 200 L 128 200 Z' fill='%23d4a574'/%3E%3Cpath d='M 120 140 L 132 120 L 168 120 L 180 140 Z' fill='%238b6f47'/%3E%3Cpath d='M 132 120 L 140 105 L 160 105 L 168 120 Z' fill='%23654321'/%3E%3Cpath d='M 135 155 L 165 155 L 161 185 L 139 185 Z' fill='%23f4e4c1' opacity='0.7'/%3E%3Cline x1='180' y1='160' x2='205' y2='160' stroke='%23c0c0c0' stroke-width='2'/%3E%3Cline x1='184' y1='168' x2='200' y2='156' stroke='%23c0c0c0' stroke-width='2'/%3E%3C/svg%3E" 
-            alt="Dessert" 
+          <img
+            src="/dessert.png"
+            alt="Dessert"
             className="plate-image"
           />
         </div>
         <div className="food-content">
           <h2 className="food-title">Dessert</h2>
-          <p className="food-description">Finish your kitchen experience with a cake to cleanse your mouth</p>
+          <p className="food-description">Finish your meal with a sweet cake</p>
         </div>
         <div className="flour-decoration">
           <div className="flour-dot" style={{ width: '5px', height: '5px', top: '35px', right: '-33px' }}></div>
@@ -165,7 +166,76 @@ const FoodJourney = () => {
           <div className="flour-dot" style={{ width: '6px', height: '6px', top: '75px', right: '-28px' }}></div>
         </div>
       </div>
-    </div>
+
+
+      {/* Bottom CTA Buttons */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        gap: '20px',
+        marginTop: '60px',
+        paddingBottom: '40px',
+        flexWrap: 'wrap',
+        position: 'relative',
+        zIndex: 10
+      }}>
+        <button
+          onClick={() => navigate('/menu')}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#FFC107',
+            color: '#000',
+            padding: '14px 40px',
+            borderRadius: '50px',
+            fontWeight: '600',
+            fontSize: '1.1em',
+            border: 'none',
+            cursor: 'pointer',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+            textDecoration: 'none'
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.transform = 'scale(1.05)';
+            e.currentTarget.style.boxShadow = '0 5px 15px rgba(255, 193, 7, 0.4)';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
+        >
+          View Menu <FiArrowRight style={{ marginLeft: '8px' }} />
+        </button>
+        <button
+          onClick={() => navigate('/cart')}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'transparent',
+            color: '#FFF',
+            padding: '14px 40px',
+            borderRadius: '50px',
+            fontWeight: '600',
+            fontSize: '1.1em',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.borderColor = '#FFC107';
+            e.currentTarget.style.color = '#FFC107';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+            e.currentTarget.style.color = '#FFF';
+          }}
+        >
+          Order Now
+        </button>
+      </div>
+    </div >
   );
 };
 
@@ -226,7 +296,54 @@ const Home = () => {
       </section>
 
       {/* Food Journey Section */}
-      <section className="food-journey-section" style={{ padding: '80px 20px', overflowX: 'hidden' }}>
+      <section className="food-journey-section" style={{ padding: '80px 10%', overflowX: 'hidden' }}>
+        {/* Header Section */}
+        <div className="menu-header" style={{ marginBottom: '80px' }}>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '40px'
+          }}>
+            <div style={{ flex: '0 0 auto', textAlign: 'left' }}>
+              <h2 style={{
+                fontFamily: "'Brush Script MT', cursive",
+                fontSize: '1.5em',
+                color: '#d4af37',
+                fontWeight: '300',
+                letterSpacing: '2px',
+                marginBottom: '10px'
+              }}>
+                Discover
+              </h2>
+              <h1 style={{
+                fontFamily: "'Georgia', serif",
+                fontSize: '3.5em',
+                color: '#ffffff',
+                fontWeight: '400',
+                letterSpacing: '4px',
+                lineHeight: '1',
+                margin: 0
+              }}>
+                Our Menu
+              </h1>
+            </div>
+            <div style={{ flex: '1 1 400px', textAlign: 'left' }}>
+              <p style={{
+                fontFamily: "'Georgia', serif",
+                fontSize: '1.1em',
+                color: '#b0b0b0',
+                lineHeight: '1.8',
+                letterSpacing: '0.5px',
+                margin: 0
+              }}>
+                Few things come close to the joy of steak and chips - cooked simply with tender, inviting care. Rest assured that our chefs treat our fresh beef with the respect it deserves. The open kitchens in many of our steakhouses are testimony to this.
+              </p>
+            </div>
+          </div>
+        </div>
         <style>{`
           .food-journey-section {
             background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
@@ -298,7 +415,7 @@ const Home = () => {
             height: 300px;
             border-radius: 50%;
             background: white;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 25px 80px rgba(212, 175, 55, 0.4);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -312,9 +429,7 @@ const Home = () => {
             transform: rotate(45deg);
           }
 
-          .plate-circle:hover {
-            box-shadow: 0 25px 80px rgba(212, 175, 55, 0.4);
-          }
+
 
           .plate-image {
             width: 100%;
@@ -419,24 +534,7 @@ const Home = () => {
         <FoodJourney />
       </section>
 
-      {/* CTA Section */}
-      <div id="menu-section" className="container mx-auto px-4 py-12">
-        <div className="text-center">
-          <h2 className="font-heading text-3xl md:text-4xl font-bold text-white mb-4">
-            Ready to Order?
-          </h2>
-          <p className="mt-3 text-gray-300 max-w-2xl mx-auto mb-8">
-            Explore our full menu with delicious shawarmas, kebabs, barbeque, and refreshing beverages.
-          </p>
-          <button
-            type="button"
-            onClick={() => navigate('/menu')}
-            className="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold bg-csk-yellow text-[#0b0b0f] hover:bg-csk-yellowSoft transition shadow-soft ring-1 ring-csk-yellow/60"
-          >
-            View Full Menu <FiArrowRight className="ml-2" />
-          </button>
-        </div>
-      </div>
+
     </div>
   );
 };
