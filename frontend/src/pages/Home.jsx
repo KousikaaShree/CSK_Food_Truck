@@ -295,8 +295,57 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Discover Our Story Section */}
+      <section style={{ backgroundColor: '#000', padding: '80px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '40px', flexWrap: 'wrap', maxWidth: '1200px', padding: '40px', backgroundColor: '#d4af37', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+          <div style={{ flex: '1', minWidth: '300px', maxWidth: '500px' }}>
+            <img
+              src="https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800"
+              alt="Delicious Food"
+              style={{ width: '100%', height: 'auto', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+            />
+          </div>
+          <div style={{ flex: '1', minWidth: '300px', maxWidth: '500px', textAlign: 'left' }}>
+            <p style={{ color: '#333', fontStyle: 'italic', marginBottom: '10px', fontSize: '16px' }}>Discover</p>
+            <h2 style={{ fontSize: '36px', marginBottom: '20px', color: '#333', fontWeight: '600' }}>Our Story</h2>
+            <p style={{ fontSize: '16px', lineHeight: '1.6', color: '#333', marginBottom: '20px' }}>
+              CSK™ was Conceptualized in 2015 by 3 Engineers from CIT, Coimbatore. The name was inspired from the IPL team CSK (Chennai Super Kings).
+            </p>
+            <p style={{ fontSize: '16px', lineHeight: '1.6', color: '#333', marginBottom: '30px' }}>
+              Being the fans of cricket and food lovers, we established our first fan based outlet in the name of CSK (Chats, Shakes & Kulfi) at Coimbatore in 2016.
+            </p>
+            <button
+              onClick={() => navigate('/about')}
+              style={{
+                backgroundColor: '#000',
+                color: '#fff',
+                textDecoration: 'none',
+                fontSize: '14px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                fontWeight: '500',
+                padding: '12px 24px',
+                borderRadius: '6px',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'background-color 0.3s'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = '#333';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = '#000';
+              }}
+            >
+              More About Us
+              <span style={{ marginLeft: '8px' }}>→</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
       {/* Food Journey Section */}
-      <section className="food-journey-section" style={{ padding: '80px 10%', overflowX: 'hidden' }}>
+      <section className="food-journey-section" style={{ padding: '80px 5%', overflowX: 'hidden' }}>
         {/* Header Section */}
         <div className="menu-header" style={{ marginBottom: '80px' }}>
           <div style={{
@@ -354,6 +403,7 @@ const Home = () => {
             max-width: 1200px;
             margin: 0 auto;
             position: relative;
+            padding: 0 40px;
           }
 
           .path-connector {
@@ -486,6 +536,10 @@ const Home = () => {
           }
 
           @media (max-width: 968px) {
+            .journey-container {
+              padding: 0 20px;
+            }
+
             .food-item {
               flex-direction: column !important;
               text-align: center !important;
@@ -517,6 +571,10 @@ const Home = () => {
           }
 
           @media (max-width: 480px) {
+            .journey-container {
+              padding: 0 15px;
+            }
+
             .plate-circle {
               width: 200px;
               height: 200px;
