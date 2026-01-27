@@ -29,12 +29,23 @@ const CustomizeModal = ({ food, isOpen, onClose, onAddToCart }) => {
 
   const handleAddToCart = () => {
     const finalPrice = calculateTotal();
+
+    // Construct Add-ons Array
+    const addOns = [];
+    if (customizations.extraKuboos) {
+      addOns.push({ name: 'Extra Kuboos', price: extraKuboosPrice });
+    }
+    if (customizations.plateShawarma) {
+      addOns.push({ name: 'Plate Shawarma', price: plateShawarmaPrice });
+    }
+
     const customizationData = {
-      extraKuboos: customizations.extraKuboos,
-      plateShawarma: customizations.plateShawarma,
+      addOns,
       customizationsPrice: finalPrice - basePrice
     };
-    onAddToCart(food._id, finalPrice, customizationData);
+
+    // Pass detailed customization data
+    onAddToCart(food.id || food._id, finalPrice, customizationData);
     onClose();
   };
 

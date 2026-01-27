@@ -14,7 +14,8 @@
 
 3. ✅ **Updated Routes** (`frontend/src/App.jsx`)
    - Added `/admin/signup` route
-   - Accessible at: http://localhost:3000/admin/signup
+   - Accessible at: http://localhost:3
+   000/admin/signup
 
 4. ✅ **Updated Admin Login** (`frontend/src/pages/admin/AdminLogin.jsx`)
    - Added "Sign up here" link

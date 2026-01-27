@@ -1,6 +1,6 @@
 import { FiSettings } from 'react-icons/fi';
 
-const FoodCard = ({ image, name, description, price, bestseller, onCustomize }) => {
+const FoodCard = ({ image, name, description, price, tags = [], onCustomize }) => {
   return (
     <div className="bg-[#14151a] rounded-2xl shadow-soft ring-1 ring-white/5 overflow-hidden hover:shadow-lift transition transform hover:-translate-y-1 hover:ring-csk-yellow/60">
       <div className="relative overflow-hidden">
@@ -11,11 +11,24 @@ const FoodCard = ({ image, name, description, price, bestseller, onCustomize }) 
           className="w-full h-44 object-cover transition duration-300 hover:scale-[1.02]"
           loading="lazy"
         />
-        {bestseller && (
-          <div className="absolute top-2 right-2 bg-csk-yellow text-[#0b0b0f] px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-soft">
-            ⭐ Bestseller
-          </div>
-        )}
+        {/* Tags Badge Container */}
+        <div className="absolute top-2 right-2 flex flex-col items-end gap-1.5">
+          {tags.includes('bestseller') && (
+            <div className="bg-csk-yellow text-[#0b0b0f] px-2 py-1 rounded-md text-xs font-bold leading-none shadow-soft">
+              ⭐ Bestseller
+            </div>
+          )}
+          {tags.includes('nonveg') && (
+            <div className="bg-red-500 text-white px-2 py-1 rounded-md text-xs font-bold leading-none shadow-soft">
+              🍗 Non-Veg
+            </div>
+          )}
+          {tags.includes('veg') && (
+            <div className="bg-green-500 text-white px-2 py-1 rounded-md text-xs font-bold leading-none shadow-soft">
+              🥬 Veg
+            </div>
+          )}
+        </div>
       </div>
       <div className="p-5">
         <h3 className="font-heading text-lg font-semibold text-white">{name}</h3>

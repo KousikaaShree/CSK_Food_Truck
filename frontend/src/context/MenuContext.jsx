@@ -13,6 +13,7 @@ const DEFAULT_ITEMS = [
     name: 'Classic Chicken Shawarma',
     description: 'Juicy chicken, fresh veggies, creamy garlic sauce, wrapped warm.',
     price: 120,
+    tags: ['nonveg', 'bestseller'],
     image: 'https://images.unsplash.com/photo-1628294895950-9805252327bc?auto=format&fit=crop&w=1200&q=70',
   },
   {
@@ -21,6 +22,7 @@ const DEFAULT_ITEMS = [
     name: 'Chicken Seekh Kebab',
     description: 'Smoky, spiced, and grilled—served with onion & mint chutney.',
     price: 160,
+    tags: ['nonveg'],
     image: 'https://images.unsplash.com/photo-1555992336-cbf95d43f0f3?auto=format&fit=crop&w=1200&q=70',
   },
   {
@@ -29,6 +31,7 @@ const DEFAULT_ITEMS = [
     name: 'BBQ Chicken (Half)',
     description: 'Charred edges, juicy center, and a balanced smoky glaze.',
     price: 240,
+    tags: ['nonveg'],
     image: 'https://images.unsplash.com/photo-1604909052579-6e9d8f86b1bb?auto=format&fit=crop&w=1200&q=70',
   },
   {
@@ -37,6 +40,7 @@ const DEFAULT_ITEMS = [
     name: 'Fresh Lime Soda',
     description: 'Crisp, refreshing, and perfectly balanced.',
     price: 60,
+    tags: ['veg', 'bestseller'],
     image: 'https://images.unsplash.com/photo-1544145945-f90425340c7e?auto=format&fit=crop&w=1200&q=70',
   },
 ];
@@ -71,7 +75,9 @@ export const MenuProvider = ({ children }) => {
 
   const addItem = (item) => {
     const id = `item-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    setItems((prev) => [{ ...item, id }, ...prev]);
+    // Ensure tags is always an array
+    const newItem = { ...item, id, tags: Array.isArray(item.tags) ? item.tags : [] };
+    setItems((prev) => [{ ...newItem }, ...prev]);
   };
 
   const removeItem = (id) => {

@@ -24,9 +24,9 @@ import AdminRoute from './components/AdminRoute';
 
 function App() {
   return (
-    <AuthProvider>
-      <CartProvider>
-        <MenuProvider>
+    <MenuProvider>
+      <AuthProvider>
+        <CartProvider>
           <Router>
             <Routes>
               {/* Public Routes */}
@@ -55,9 +55,9 @@ function App() {
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </Router>
-        </MenuProvider>
-      </CartProvider>
-    </AuthProvider>
+        </CartProvider>
+      </AuthProvider>
+    </MenuProvider>
   );
 }
 

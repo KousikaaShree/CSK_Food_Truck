@@ -10,6 +10,11 @@ const AdminMenuManager = () => {
     description: '',
     price: '',
     category: ADMIN_CATEGORIES[0],
+    tags: {
+      bestseller: false,
+      veg: false,
+      nonveg: false
+    }
   });
 
   const itemCountByCategory = useMemo(() => {
@@ -19,10 +24,25 @@ const AdminMenuManager = () => {
     return map;
   }, [items]);
 
+  const handleTagChange = (tag) => {
+    setForm(prev => ({
+      ...prev,
+      tags: {
+        ...prev.tags,
+        [tag]: !prev.tags[tag]
+      }
+    }));
+  };
+
   const onSubmit = (e) => {
     e.preventDefault();
     const priceNum = Number(form.price);
     if (!form.name.trim() || !form.description.trim() || !Number.isFinite(priceNum)) return;
+
+    // Convert boolean tags to array
+    const selectedTags = Object.entries(form.tags)
+      .filter(([_, isSelected]) => isSelected)
+      .map(([tag]) => tag);
 
     addItem({
       name: form.name.trim(),
@@ -32,9 +52,17 @@ const AdminMenuManager = () => {
       description: form.description.trim(),
       price: priceNum,
       category: form.category,
+      tags: selectedTags
     });
 
-    setForm((p) => ({ ...p, name: '', image: '', description: '', price: '' }));
+    setForm({
+      name: '',
+      image: '',
+      description: '',
+      price: '',
+      category: ADMIN_CATEGORIES[0],
+      tags: { bestseller: false, veg: false, nonveg: false }
+    });
   };
 
   return (
@@ -44,8 +72,7 @@ const AdminMenuManager = () => {
           <div className="max-w-3xl">
             <h1 className="font-heading text-4xl md:text-5xl font-bold text-csk-yellow">Admin Menu Manager</h1>
             <p className="mt-3 text-gray-300">
-              Frontend simulation of admin-controlled menu. Add items with one category. The user-facing Menu page will
-              automatically show ONLY categories that have items.
+              Frontend simulation of admin-controlled menu. Add items with one category and multiple tags.
             </p>
           </div>
           <button
@@ -131,6 +158,40 @@ const AdminMenuManager = () => {
                 </div>
               </div>
 
+              {/* Tag Selection */}
+              <div>
+                <label className="text-sm font-medium text-gray-200 block mb-2">Tags</label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={form.tags.bestseller}
+                      onChange={() => handleTagChange('bestseller')}
+                      className="rounded bg-[#0f0f14] border-white/20 text-csk-yellow focus:ring-csk-yellow/70"
+                    />
+                    <span className="text-white text-sm">Bestseller</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={form.tags.veg}
+                      onChange={() => handleTagChange('veg')}
+                      className="rounded bg-[#0f0f14] border-white/20 text-csk-yellow focus:ring-csk-yellow/70"
+                    />
+                    <span className="text-white text-sm">Veg</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={form.tags.nonveg}
+                      onChange={() => handleTagChange('nonveg')}
+                      className="rounded bg-[#0f0f14] border-white/20 text-csk-yellow focus:ring-csk-yellow/70"
+                    />
+                    <span className="text-white text-sm">Non-Veg</span>
+                  </label>
+                </div>
+              </div>
+
               <button
                 type="submit"
                 className="w-full rounded-full bg-csk-yellow px-6 py-3 text-sm font-semibold text-[#0b0b0f] hover:bg-csk-yellowSoft transition shadow-soft ring-1 ring-csk-yellow/60 inline-flex items-center justify-center gap-2"
@@ -158,6 +219,15 @@ const AdminMenuManager = () => {
                         <div className="text-xs text-gray-300 mt-1">
                           {i.category} • <span className="text-csk-yellow">₹{i.price}</span>
                         </div>
+                        {i.tags && i.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {i.tags.map(t => (
+                              <span key={t} className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-gray-300 uppercase tracking-wide">
+                                {t}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       <button
                         type="button"
@@ -168,7 +238,6 @@ const AdminMenuManager = () => {
                         <FiTrash2 />
                       </button>
                     </div>
-                    <div className="mt-2 text-sm text-gray-300 line-clamp-2">{i.description}</div>
                   </div>
                 </div>
               ))}
