@@ -16,7 +16,7 @@ export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState({ items: [], total: 0 });
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
-  const { items: menuItems } = useMenu(); // Get items from menu context to cross-reference
+  const { items: menuItems } = useMenu();
 
   // Load cart from local storage on mount
   useEffect(() => {
@@ -35,38 +35,40 @@ export const CartProvider = ({ children }) => {
     localStorage.setItem('csk_cart', JSON.stringify(cart));
   }, [cart]);
 
-  const addToCart = async (foodId, quantity = 1, customizationData = null) => {
-    // Note: Removed user check to allow guest checkout or simple testing as per client-side transition
-    // if (!user) return { success: false, requiresAuth: true };
+  // Helper to generate a unique ID for a cart item based on food ID and addons
+  const generateCartItemId = (foodId, addOns = []) => {
+    const sortedAddOns = [...addOns].sort((a, b) => a.name.localeCompare(b.name));
+    const addOnString = sortedAddOns.map(addon => addon.name).join('|');
+    return `${foodId}-${addOnString}`;
+  };
 
+  const addToCart = async (foodId, quantity = 1, customizationData = null) => {
     const foodItem = menuItems.find(i => i.id === foodId || i._id === foodId);
     if (!foodItem) return { success: false, message: 'Item not found' };
 
+    const addOns = customizationData?.addOns || [];
+    const cartItemId = generateCartItemId(foodId, addOns);
+
     const basePrice = Number(foodItem.price);
-    const addOnsTotal = customizationData?.customizationsPrice || 0;
-    const finalPrice = basePrice + addOnsTotal;
+    const addOnsTotal = addOns.reduce((sum, addon) => sum + Number(addon.price), 0);
+    const finalUnitPrice = basePrice + addOnsTotal;
 
     setCart(prev => {
-      const existingItemIndex = prev.items.findIndex(item =>
-        (item.food.id === foodId || item.food._id === foodId) &&
-        // Simple deep equality check for add-ons could be here, but for now assuming new entry for customized items
-        // or just grouping by ID if no customizations.
-        // Let's treat every addition as unique if it has customizations to simplify.
-        // If no customizations, we can group.
-        (customizationData ? false : !item.customizationData)
-      );
-
       let newItems = [...prev.items];
+      const existingItemIndex = newItems.findIndex(item => item.cartItemId === cartItemId);
 
       if (existingItemIndex > -1) {
+        // Update existing item
         newItems[existingItemIndex].quantity += quantity;
       } else {
+        // Add new item
         newItems.push({
+          cartItemId,
           food: foodItem,
           quantity,
-          price: finalPrice, // Store unit price with add-ons
+          price: finalUnitPrice, // Unit price (Base + Addons)
           basePrice,
-          customizationData: customizationData || { addOns: [] }
+          customizationData: { addOns }
         });
       }
 
@@ -82,21 +84,21 @@ export const CartProvider = ({ children }) => {
     return { success: true };
   };
 
-  const updateQuantity = async (foodId, newQuantity) => {
-    // Re-implemented to remove specific index or find by ID. 
-    // Since we don't have unique cart Item IDs yet, this simple logic will update ALL matching foodIds
-    // Which is a compromise for this refactor speed. Ideally we add a cartItemId.
-
+  const updateQuantity = async (cartItemId, newQuantity) => {
     setCart(prev => {
-      let newItems = prev.items.map(item => {
-        if (item.food.id === foodId || item.food._id === foodId) {
+      // If quantity is 0 or less, remove the item
+      if (newQuantity <= 0) {
+        const newItems = prev.items.filter(item => item.cartItemId !== cartItemId);
+        const newTotal = newItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        return { items: newItems, total: newTotal };
+      }
+
+      const newItems = prev.items.map(item => {
+        if (item.cartItemId === cartItemId) {
           return { ...item, quantity: newQuantity };
         }
         return item;
       });
-
-      // Filter out items with 0 quantity
-      newItems = newItems.filter(item => item.quantity > 0);
 
       const newTotal = newItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       return { items: newItems, total: newTotal };
@@ -104,9 +106,9 @@ export const CartProvider = ({ children }) => {
     return { success: true };
   };
 
-  const removeFromCart = async (foodId) => {
+  const removeFromCart = async (cartItemId) => {
     setCart(prev => {
-      const newItems = prev.items.filter(item => item.food.id !== foodId && item.food._id !== foodId);
+      const newItems = prev.items.filter(item => item.cartItemId !== cartItemId);
       const newTotal = newItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       return { items: newItems, total: newTotal };
     });
