@@ -297,11 +297,11 @@ const Home = () => {
 
       {/* Discover Our Story Section */}
       <section style={{ backgroundColor: '#000', padding: '80px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '40px', flexWrap: 'wrap', maxWidth: '1200px', padding: '40px', backgroundColor: '#d4af37', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '40px', flexWrap: 'wrap', maxWidth: '1200px', padding: '40px', backgroundColor: '#FFD700', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
           <div style={{ flex: '1', minWidth: '300px', maxWidth: '500px' }}>
-            <img
-              src="https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800"
-              alt="Delicious Food"
+            <img 
+              src="https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800" 
+              alt="Delicious Food" 
               style={{ width: '100%', height: 'auto', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
             />
           </div>
@@ -337,7 +337,7 @@ const Home = () => {
                 e.currentTarget.style.backgroundColor = '#000';
               }}
             >
-              More About Us
+              More About Us 
               <span style={{ marginLeft: '8px' }}>→</span>
             </button>
           </div>

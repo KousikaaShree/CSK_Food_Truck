@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { GoogleLogin } from '@react-oauth/google';
 
 const AdminLogin = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { adminLogin } = useAuth();
+  const { adminLogin, googleLoginAdmin } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -19,13 +20,25 @@ const AdminLogin = () => {
     setLoading(true);
 
     const result = await adminLogin(formData.email, formData.password);
-    
+
     if (result.success) {
       navigate('/admin/dashboard');
     } else {
       setError(result.message);
     }
-    
+
+    setLoading(false);
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError('');
+    setLoading(true);
+    const result = await googleLoginAdmin(credentialResponse.credential);
+    if (result.success) {
+      navigate('/admin/dashboard');
+    } else {
+      setError(result.message);
+    }
     setLoading(false);
   };
 
@@ -81,11 +94,29 @@ const AdminLogin = () => {
           </button>
         </form>
 
+        <div className="my-6 flex items-center">
+          <div className="flex-grow border-t border-white/10"></div>
+          <span className="mx-4 text-gray-400 text-sm">OR</span>
+          <div className="flex-grow border-t border-white/10"></div>
+        </div>
+
+        <div className="flex justify-center">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => setError('Google Login Failed')}
+            useOneTap
+            theme="filled_black"
+            shape="pill"
+            text="signin_with"
+            width="100%"
+          />
+        </div>
+
         <div className="mt-6 text-center">
           <p className="text-gray-300 text-sm">
             Don't have an admin account?{' '}
-            <Link 
-              to="/admin/signup" 
+            <Link
+              to="/admin/signup"
               className="text-csk-yellow hover:underline font-semibold"
             >
               Sign up here

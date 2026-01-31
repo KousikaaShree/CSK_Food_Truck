@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateAdmin } = require('../middleware/auth');
+const { verifyToken, requireAdmin } = require('../middleware/auth');
 const Food = require('../models/Food');
 const Category = require('../models/Category');
 const Order = require('../models/Order');
@@ -18,13 +18,13 @@ if (!fs.existsSync(uploadsDir)) {
 // ========== CATEGORY MANAGEMENT ==========
 
 // Create category
-router.post('/categories', authenticateAdmin, async (req, res) => {
+router.post('/categories', verifyToken, requireAdmin, async (req, res) => {
   try {
     const { name, description } = req.body;
-    
+
     const category = new Category({ name, description });
     await category.save();
-    
+
     res.status(201).json(category);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -32,7 +32,7 @@ router.post('/categories', authenticateAdmin, async (req, res) => {
 });
 
 // Get all categories
-router.get('/categories', authenticateAdmin, async (req, res) => {
+router.get('/categories', verifyToken, requireAdmin, async (req, res) => {
   try {
     const categories = await Category.find().sort({ name: 1 });
     res.json(categories);
@@ -44,10 +44,10 @@ router.get('/categories', authenticateAdmin, async (req, res) => {
 // ========== FOOD MANAGEMENT ==========
 
 // Create food item
-router.post('/foods', authenticateAdmin, upload.single('image'), async (req, res) => {
+router.post('/foods', verifyToken, requireAdmin, upload.single('image'), async (req, res) => {
   try {
     const { name, description, price, category, available, popular } = req.body;
-    
+
     if (!req.file) {
       return res.status(400).json({ message: 'Image is required' });
     }
@@ -82,24 +82,24 @@ router.post('/foods', authenticateAdmin, upload.single('image'), async (req, res
 
     await food.save();
     await food.populate('category', 'name');
-    
+
     res.status(201).json(food);
   } catch (error) {
     if (req.file) {
       try {
         if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-      } catch (_) {}
+      } catch (_) { }
     }
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
 // Update food item
-router.put('/foods/:id', authenticateAdmin, upload.single('image'), async (req, res) => {
+router.put('/foods/:id', verifyToken, requireAdmin, upload.single('image'), async (req, res) => {
   try {
     const { name, description, price, category, available, popular } = req.body;
     const food = await Food.findById(req.params.id);
-    
+
     if (!food) {
       return res.status(404).json({ message: 'Food not found' });
     }
@@ -133,20 +133,20 @@ router.put('/foods/:id', authenticateAdmin, upload.single('image'), async (req, 
 
     await food.save();
     await food.populate('category', 'name');
-    
+
     res.json(food);
   } catch (error) {
     if (req.file) {
       try {
         if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-      } catch (_) {}
+      } catch (_) { }
     }
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
 // Delete food item
-router.delete('/foods/:id', authenticateAdmin, async (req, res) => {
+router.delete('/foods/:id', verifyToken, requireAdmin, async (req, res) => {
   try {
     const food = await Food.findById(req.params.id);
     if (!food) {
@@ -161,12 +161,12 @@ router.delete('/foods/:id', authenticateAdmin, async (req, res) => {
 });
 
 // Get all foods (admin)
-router.get('/foods', authenticateAdmin, async (req, res) => {
+router.get('/foods', verifyToken, requireAdmin, async (req, res) => {
   try {
     const foods = await Food.find()
       .populate('category', 'name')
       .sort({ createdAt: -1 });
-    
+
     res.json(foods);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -176,14 +176,14 @@ router.get('/foods', authenticateAdmin, async (req, res) => {
 // ========== ORDER MANAGEMENT ==========
 
 // Get all orders
-router.get('/orders', authenticateAdmin, async (req, res) => {
+router.get('/orders', verifyToken, requireAdmin, async (req, res) => {
   try {
     const orders = await Order.find()
       .populate('user', 'name email mobile')
       .populate('items.food', 'name image')
       .populate('deliveryPartner', 'name phone')
       .sort({ createdAt: -1 });
-    
+
     res.json(orders);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -191,13 +191,13 @@ router.get('/orders', authenticateAdmin, async (req, res) => {
 });
 
 // Get single order
-router.get('/orders/:id', authenticateAdmin, async (req, res) => {
+router.get('/orders/:id', verifyToken, requireAdmin, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
       .populate('user', 'name email mobile')
       .populate('items.food', 'name image description')
       .populate('deliveryPartner', 'name phone vehicleNumber');
-    
+
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
@@ -209,11 +209,11 @@ router.get('/orders/:id', authenticateAdmin, async (req, res) => {
 });
 
 // Update order status
-router.put('/orders/:id/status', authenticateAdmin, async (req, res) => {
+router.put('/orders/:id/status', verifyToken, requireAdmin, async (req, res) => {
   try {
     const { status } = req.body;
     const validStatuses = ['placed', 'preparing', 'out_for_delivery', 'delivered', 'cancelled'];
-    
+
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ message: 'Invalid status' });
     }
@@ -224,7 +224,7 @@ router.put('/orders/:id/status', authenticateAdmin, async (req, res) => {
     }
 
     order.status = status;
-    
+
     if (status === 'delivered' && order.paymentMethod === 'cod') {
       order.paymentStatus = 'paid';
     }
@@ -241,10 +241,10 @@ router.put('/orders/:id/status', authenticateAdmin, async (req, res) => {
 });
 
 // Assign delivery partner
-router.put('/orders/:id/assign-delivery', authenticateAdmin, async (req, res) => {
+router.put('/orders/:id/assign-delivery', verifyToken, requireAdmin, async (req, res) => {
   try {
     const { deliveryPartnerId } = req.body;
-    
+
     const order = await Order.findById(req.params.id);
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
@@ -275,13 +275,13 @@ router.put('/orders/:id/assign-delivery', authenticateAdmin, async (req, res) =>
 // ========== DELIVERY PARTNER MANAGEMENT ==========
 
 // Create delivery partner
-router.post('/delivery', authenticateAdmin, async (req, res) => {
+router.post('/delivery', verifyToken, requireAdmin, async (req, res) => {
   try {
     const { name, phone, vehicleNumber } = req.body;
-    
+
     const delivery = new Delivery({ name, phone, vehicleNumber });
     await delivery.save();
-    
+
     res.status(201).json(delivery);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -289,7 +289,7 @@ router.post('/delivery', authenticateAdmin, async (req, res) => {
 });
 
 // Get all delivery partners
-router.get('/delivery', authenticateAdmin, async (req, res) => {
+router.get('/delivery', verifyToken, requireAdmin, async (req, res) => {
   try {
     const deliveryPartners = await Delivery.find();
     res.json(deliveryPartners);
@@ -299,10 +299,10 @@ router.get('/delivery', authenticateAdmin, async (req, res) => {
 });
 
 // Update delivery partner location
-router.put('/delivery/:id/location', authenticateAdmin, async (req, res) => {
+router.put('/delivery/:id/location', verifyToken, requireAdmin, async (req, res) => {
   try {
     const { lat, lng } = req.body;
-    
+
     const delivery = await Delivery.findById(req.params.id);
     if (!delivery) {
       return res.status(404).json({ message: 'Delivery partner not found' });
@@ -320,7 +320,7 @@ router.put('/delivery/:id/location', authenticateAdmin, async (req, res) => {
 // ========== DASHBOARD ANALYTICS ==========
 
 // Get dashboard stats
-router.get('/dashboard', authenticateAdmin, async (req, res) => {
+router.get('/dashboard', verifyToken, requireAdmin, async (req, res) => {
   try {
     const totalOrders = await Order.countDocuments();
     const totalRevenue = await Order.aggregate([

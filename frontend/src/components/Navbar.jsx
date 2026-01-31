@@ -78,6 +78,16 @@ const Navbar = () => {
               <FiUser />
             </NavLink>
 
+            {user?.role === 'admin' && (
+              <NavLink
+                to="/admin/dashboard"
+                className="inline-flex items-center gap-2 text-sm font-medium text-csk-yellow hover:text-white transition"
+                aria-label="Admin Dashboard"
+              >
+                Dashboard (Admin)
+              </NavLink>
+            )}
+
             {user ? (
               <button
                 onClick={handleLogout}
@@ -132,7 +142,7 @@ const Navbar = () => {
                 <NavLink to="/cart" className="inline-flex items-center gap-2 text-sm font-medium text-white/90" onClick={() => setMobileOpen(false)}>
                   <FiShoppingCart /> Cart
                   {cartCount > 0 && (
-                <span className="ml-1 bg-csk-yellow text-[#0b0b0f] text-[11px] font-semibold rounded-full min-w-5 h-5 px-1 flex items-center justify-center">
+                    <span className="ml-1 bg-csk-yellow text-[#0b0b0f] text-[11px] font-semibold rounded-full min-w-5 h-5 px-1 flex items-center justify-center">
                       {cartCount}
                     </span>
                   )}
@@ -145,6 +155,16 @@ const Navbar = () => {
                 >
                   <FiUser />
                 </NavLink>
+
+                {user?.role === 'admin' && (
+                  <NavLink
+                    to="/admin/dashboard"
+                    className="inline-flex items-center gap-2 text-sm font-medium text-csk-yellow"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    Admin
+                  </NavLink>
+                )}
 
                 {user ? (
                   <button onClick={handleLogout} className="inline-flex items-center gap-2 text-sm font-medium text-csk-charcoal/80 hover:text-csk-charcoal">
