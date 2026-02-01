@@ -13,7 +13,7 @@ const razorpay = new Razorpay({
 router.post('/create-order', authenticateUser, async (req, res) => {
   try {
     const { amount } = req.body;
-    
+
     const options = {
       amount: amount * 100, // Convert to paise
       currency: 'INR',
@@ -21,7 +21,7 @@ router.post('/create-order', authenticateUser, async (req, res) => {
     };
 
     const order = await razorpay.orders.create(options);
-    
+
     res.json({
       orderId: order.id,
       amount: order.amount,
@@ -44,8 +44,8 @@ router.post('/verify-payment', authenticateUser, async (req, res) => {
       .digest('hex');
 
     if (generatedSignature === razorpay_signature) {
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         paymentId: razorpay_payment_id,
         orderId: razorpay_order_id
       });

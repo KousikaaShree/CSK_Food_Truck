@@ -62,6 +62,34 @@ export const MenuProvider = ({ children }) => {
     if (stored && stored.length > 0) setItems(stored);
   }, []);
 
+  // Try to fetch foods from backend to replace local seed data when available
+  useEffect(() => {
+    const fetchFoods = async () => {
+      try {
+        const res = await fetch('/api/foods');
+        if (!res.ok) return; // keep defaults if backend not available
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped = data.map(f => ({
+            id: f._id,
+            _id: f._id,
+            category: f.categoryName || (f.category && f.category.name) || f.category,
+            name: f.name,
+            description: f.description,
+            price: f.price,
+            tags: [],
+            image: f.image,
+            available: f.available
+          }));
+          setItems(mapped);
+        }
+      } catch (err) {
+        // ignore - keep defaults
+      }
+    };
+    fetchFoods();
+  }, []);
+
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }, [items]);

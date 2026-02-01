@@ -7,11 +7,17 @@ exports.verifyToken = (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
 
-    if (!token) {
+    if (!token || token === 'null' || token === 'undefined') {
+      console.log("Auth Error: Missing or invalid token string:", token);
       return res.status(401).json({ message: 'No token, authorization denied' });
     }
 
+    if (!process.env.JWT_SECRET) {
+      console.error("CRITICAL: JWT_SECRET is missing from process.env");
+    }
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log("Auth Success: Decoded payload:", decoded);
     req.user = decoded; // Contains { id, role }
     next();
   } catch (error) {
@@ -38,18 +44,20 @@ exports.authenticateUser = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    // Support both old 'userId' and new 'id'
     const userId = decoded.id || decoded.userId;
+    console.log("AuthenticateUser: Searching for User ID:", userId);
     const user = await User.findById(userId).select('-password');
 
     if (!user) {
-      return res.status(401).json({ message: 'Token is not valid' });
+      console.log("AuthenticateUser: User not found for ID:", userId);
+      return res.status(401).json({ message: 'User associated with this token no longer exists' });
     }
 
     req.user = user;
     next();
   } catch (error) {
-    res.status(401).json({ message: 'Token is not valid' });
+    console.error("authenticateUser error:", error.message);
+    res.status(401).json({ message: 'Authentication failed: ' + error.message });
   }
 };
 

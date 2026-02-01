@@ -3,6 +3,7 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { authenticateUser } = require('../middleware/auth');
 // Admin model is now deprecated in favor of User with role: 'admin'
 const { OAuth2Client } = require('google-auth-library');
 
@@ -155,10 +156,12 @@ router.post('/admin/login', [
     const token = generateToken(admin._id, 'admin');
     res.json({
       token,
-      admin: {
-        id: admin._id,
+      user: {
+        _id: admin._id,
         name: admin.name,
-        email: admin.email
+        email: admin.email,
+        mobile: admin.mobile,
+        role: admin.role
       }
     });
   } catch (error) {
@@ -261,16 +264,23 @@ router.post('/google/admin', async (req, res) => {
     const token = generateToken(admin._id, 'admin');
     res.json({
       token,
-      admin: {
-        id: admin._id,
+      user: {
+        _id: admin._id,
         name: admin.name,
-        email: admin.email
+        email: admin.email,
+        mobile: admin.mobile,
+        role: admin.role
       }
     });
   } catch (error) {
     console.error('Google Admin Auth Error:', error);
     res.status(401).json({ message: 'Invalid Google Token', error: error.message });
   }
+});
+
+// Get user profile (and verify token)
+router.get('/me', authenticateUser, (req, res) => {
+  res.json({ user: req.user });
 });
 
 module.exports = router;

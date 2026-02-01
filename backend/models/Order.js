@@ -14,12 +14,17 @@ const orderSchema = new mongoose.Schema({
   items: [{
     food: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Food',
-      required: true
+      ref: 'Food'
     },
     name: String,
     quantity: Number,
-    price: Number
+    price: Number,
+    customizationData: {
+      addOns: [{
+        name: String,
+        price: Number
+      }]
+    }
   }],
   address: {
     fullAddress: String,

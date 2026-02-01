@@ -1,4 +1,5 @@
 import { createContext, useState, useContext, useEffect } from 'react';
+import axios from 'axios';
 import { useAuth } from './AuthContext';
 import { useMenu } from './MenuContext';
 
@@ -53,6 +54,17 @@ export const CartProvider = ({ children }) => {
     const addOnsTotal = addOns.reduce((sum, addon) => sum + Number(addon.price), 0);
     const finalUnitPrice = basePrice + addOnsTotal;
 
+    if (user) {
+      try {
+        await axios.post('/api/cart/add',
+          { foodId, quantity, customizationData: { addOns }, cartItemId },
+          { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+        );
+      } catch (error) {
+        console.error("Failed to sync add to cart", error);
+      }
+    }
+
     setCart(prev => {
       let newItems = [...prev.items];
       const existingItemIndex = newItems.findIndex(item => item.cartItemId === cartItemId);
@@ -85,6 +97,17 @@ export const CartProvider = ({ children }) => {
   };
 
   const updateQuantity = async (cartItemId, newQuantity) => {
+    if (user) {
+      try {
+        await axios.put('/api/cart/update',
+          { cartItemId, quantity: newQuantity },
+          { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+        );
+      } catch (error) {
+        console.error("Failed to sync update quantity", error);
+      }
+    }
+
     setCart(prev => {
       // If quantity is 0 or less, remove the item
       if (newQuantity <= 0) {
@@ -107,6 +130,16 @@ export const CartProvider = ({ children }) => {
   };
 
   const removeFromCart = async (cartItemId) => {
+    if (user) {
+      try {
+        await axios.delete(`/api/cart/remove/${cartItemId}`,
+          { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+        );
+      } catch (error) {
+        console.error("Failed to sync remove from cart", error);
+      }
+    }
+
     setCart(prev => {
       const newItems = prev.items.filter(item => item.cartItemId !== cartItemId);
       const newTotal = newItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -116,6 +149,15 @@ export const CartProvider = ({ children }) => {
   };
 
   const clearCart = async () => {
+    if (user) {
+      try {
+        await axios.delete('/api/cart/clear',
+          { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+        );
+      } catch (error) {
+        console.error("Failed to sync clear cart", error);
+      }
+    }
     setCart({ items: [], total: 0 });
     return { success: true };
   };

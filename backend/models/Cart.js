@@ -7,6 +7,7 @@ const cartSchema = new mongoose.Schema({
     required: true
   },
   items: [{
+    cartItemId: String,
     food: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Food',
@@ -21,6 +22,12 @@ const cartSchema = new mongoose.Schema({
     price: {
       type: Number,
       required: true
+    },
+    customizationData: {
+      addOns: [{
+        name: String,
+        price: Number
+      }]
     }
   }],
   total: {
