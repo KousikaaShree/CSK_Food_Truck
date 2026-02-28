@@ -8,13 +8,13 @@ const About = () => {
               About CSK Food Truck
             </h1>
             <p className="mt-5 text-gray-300">
-              CSK Food Truck – Chicken Shawarma & Kebab is built on one simple idea: serve bold flavors with a calm,
-              premium experience. From marination to grilling, we focus on quality ingredients, hygiene, and consistent
-              taste—every single time.
+              CSK™ was Conceptualized in 2015 by 3 engineers from CIT, Coimbatore. The name was inspired by the IPL team CSK (Chennai Super Kings). Being fans of cricket and food lovers, we established our first fan-based outlet in the name of CSK (chats, shakes & kulfi) at Coimbatore in 2016.
             </p>
             <p className="mt-4 text-gray-300">
-              Whether you’re craving a juicy shawarma, a smoky kebab, or a satisfying combo meal, our menu is crafted to
-              feel comforting, filling, and fresh.
+              From thereon we have served various mouth watering recipes with quality and at affordable price to the customers across the city. The menu and the concept of the restaurant have been carefully customized to provide better taste, quality and good ambience to the customers.
+            </p>
+            <p className="mt-4 text-gray-300">
+              We have ensured CSK is not just a place to dine rather it’s a place to hangout. Over the years it has become a prime hotspot for college students. Moreover our signature menu and concepts have made our reach very easy to the customers and has encouraged us to establish in many cities.
             </p>
 
             <div className="mt-8 grid sm:grid-cols-3 gap-4">

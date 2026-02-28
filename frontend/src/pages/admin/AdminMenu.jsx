@@ -26,7 +26,7 @@ const AdminMenu = () => {
   const fetchFoods = async () => {
     try {
       const res = await axios.get('/api/admin/foods', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
+        headers: { Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}` }
       });
       setFoods(res.data);
     } catch (error) {
@@ -39,7 +39,7 @@ const AdminMenu = () => {
   const fetchCategories = async () => {
     try {
       const res = await axios.get('/api/admin/categories', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
+        headers: { Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}` }
       });
       console.log('Categories fetched:', res.data);
       // Filter to only allow: Shawarma, Kebab, Barbeque, Beverages
@@ -76,14 +76,14 @@ const AdminMenu = () => {
       if (editingFood) {
         await axios.put(`/api/admin/foods/${editingFood._id}`, formDataToSend, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('adminToken')}`,
+            Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}`,
             'Content-Type': 'multipart/form-data'
           }
         });
       } else {
         await axios.post('/api/admin/foods', formDataToSend, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('adminToken')}`,
+            Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}`,
             'Content-Type': 'multipart/form-data'
           }
         });
@@ -128,7 +128,7 @@ const AdminMenu = () => {
 
     try {
       await axios.delete(`/api/admin/foods/${id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
+        headers: { Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}` }
       });
       fetchFoods();
     } catch (error) {

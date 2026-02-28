@@ -66,7 +66,9 @@ export const AuthProvider = ({ children }) => {
   const adminLogin = async (email, password) => {
     try {
       const res = await axios.post('/api/auth/admin/login', { email, password });
+      // Keep both keys for backward compatibility with older admin pages
       localStorage.setItem('token', res.data.token);
+      localStorage.setItem('adminToken', res.data.token);
       setAdmin(res.data.user);
       setUser(res.data.user); // Set user state too so Checkout/Cart work
       return { success: true };
@@ -78,7 +80,9 @@ export const AuthProvider = ({ children }) => {
   const adminSignup = async (name, email, password) => {
     try {
       const res = await axios.post('/api/auth/admin/signup', { name, email, password });
+      // Keep both keys for backward compatibility with older admin pages
       localStorage.setItem('token', res.data.token);
+      localStorage.setItem('adminToken', res.data.token);
       setAdmin(res.data.user);
       setUser(res.data.user);
       return { success: true };
@@ -101,7 +105,9 @@ export const AuthProvider = ({ children }) => {
   const googleLoginAdmin = async (credential) => {
     try {
       const res = await axios.post('/api/auth/google/admin', { idToken: credential });
+      // Keep both keys for backward compatibility with older admin pages
       localStorage.setItem('token', res.data.token);
+      localStorage.setItem('adminToken', res.data.token);
       setAdmin(res.data.user);
       setUser(res.data.user);
       return { success: true };
@@ -112,6 +118,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('adminToken');
     setUser(null);
     setAdmin(null);
   };
