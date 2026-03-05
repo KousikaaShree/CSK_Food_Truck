@@ -36,7 +36,7 @@ const Checkout = () => {
     try {
       // Clear backend cart first (ignore error if cart doesn't exist)
       try {
-        await axios.delete('/api/cart/clear', {
+        await axios.delete('https://csk-food-truck.onrender.com/api/cart/clear', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
       } catch (clearError) {

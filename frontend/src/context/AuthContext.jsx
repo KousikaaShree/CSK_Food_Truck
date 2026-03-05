@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
-          const res = await axios.get('/api/auth/me', {
+          const res = await axios.get('https://csk-food-truck.onrender.com/api/auth/me', {
             headers: { Authorization: `Bearer ${token}` }
           });
           setUser(res.data.user);
@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const res = await axios.post('/api/auth/login', { email, password });
+      const res = await axios.post('https://csk-food-truck.onrender.com/api/auth/login', { email, password });
       localStorage.setItem('token', res.data.token);
       setUser(res.data.user);
       return { success: true };
@@ -54,7 +54,7 @@ export const AuthProvider = ({ children }) => {
 
   const signup = async (name, email, mobile, password) => {
     try {
-      const res = await axios.post('/api/auth/signup', { name, email, mobile, password });
+      const res = await axios.post('https://csk-food-truck.onrender.com/api/auth/signup', { name, email, mobile, password });
       localStorage.setItem('token', res.data.token);
       setUser(res.data.user);
       return { success: true };
@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }) => {
 
   const adminLogin = async (email, password) => {
     try {
-      const res = await axios.post('/api/auth/admin/login', { email, password });
+      const res = await axios.post('https://csk-food-truck.onrender.com/api/auth/admin/login', { email, password });
       // Keep both keys for backward compatibility with older admin pages
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('adminToken', res.data.token);
@@ -79,7 +79,7 @@ export const AuthProvider = ({ children }) => {
 
   const adminSignup = async (name, email, password) => {
     try {
-      const res = await axios.post('/api/auth/admin/signup', { name, email, password });
+      const res = await axios.post('https://csk-food-truck.onrender.com/api/auth/admin/signup', { name, email, password });
       // Keep both keys for backward compatibility with older admin pages
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('adminToken', res.data.token);
@@ -93,7 +93,7 @@ export const AuthProvider = ({ children }) => {
 
   const googleLoginUser = async (credential) => {
     try {
-      const res = await axios.post('/api/auth/google/user', { idToken: credential });
+      const res = await axios.post('https://csk-food-truck.onrender.com/api/auth/google/user', { idToken: credential });
       localStorage.setItem('token', res.data.token);
       setUser(res.data.user);
       return { success: true };
@@ -104,7 +104,7 @@ export const AuthProvider = ({ children }) => {
 
   const googleLoginAdmin = async (credential) => {
     try {
-      const res = await axios.post('/api/auth/google/admin', { idToken: credential });
+      const res = await axios.post('https://csk-food-truck.onrender.com/api/auth/google/admin', { idToken: credential });
       // Keep both keys for backward compatibility with older admin pages
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('adminToken', res.data.token);
