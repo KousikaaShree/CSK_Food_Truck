@@ -17,6 +17,10 @@ app.use(express.urlencoded({ extended: true }));
 // Static uploads (fallback when Cloudinary isn't configured)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+app.get('/', (req, res) => {
+  res.send('CSK Food Truck Backend is Running 🚚');
+});
+
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/foods', require('./routes/foods'));
