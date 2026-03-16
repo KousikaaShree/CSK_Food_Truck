@@ -46,7 +46,8 @@ router.post('/signup', [
         id: user._id,
         name: user.name,
         email: user.email,
-        mobile: user.mobile
+        mobile: user.mobile,
+        role: user.role
       }
     });
   } catch (error) {
@@ -86,7 +87,8 @@ router.post('/login', [
         id: user._id,
         name: user.name,
         email: user.email,
-        mobile: user.mobile
+        mobile: user.mobile,
+        role: user.role
       }
     });
   } catch (error) {
@@ -207,6 +209,7 @@ router.post('/google/user', async (req, res) => {
         name: user.name,
         email: user.email,
         mobile: user.mobile,
+        role: user.role,
         picture
       }
     });

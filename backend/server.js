@@ -26,8 +26,19 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/foods', require('./routes/foods'));
 app.use('/api/cart', require('./routes/cart'));
 app.use('/api/orders', require('./routes/orders'));
+app.use('/api/user', require('./routes/user'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/payment', require('./routes/payment'));
+
+// Serve frontend in production
+// We'll enable this by default for the deployed version
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
+
+app.get('*', (req, res) => {
+  if (!req.path.startsWith('/api')) {
+    res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+  }
+});
 
 // Multer (file upload) error handler with friendly messages
 app.use((err, req, res, next) => {
@@ -51,8 +62,8 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/csk-food-
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-.then(() => console.log('MongoDB Connected'))
-.catch(err => console.error('MongoDB connection error:', err));
+  .then(() => console.log('MongoDB Connected'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

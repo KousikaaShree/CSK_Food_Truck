@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useCart } from '../context/CartContext';
@@ -18,6 +18,8 @@ const Checkout = () => {
   const [paymentMethod, setPaymentMethod] = useState('razorpay');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isWithinOrderWindow, setIsWithinOrderWindow] = useState(true);
+  const [currentISTTime, setCurrentISTTime] = useState('');
 
   const subtotal = cart?.total || 0;
   const tax = subtotal * 0.18;
@@ -26,6 +28,47 @@ const Checkout = () => {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  // Helper to compute current IST time and whether it is within the allowed ordering window
+  const computeISTOrderWindow = () => {
+    const now = new Date();
+
+    // Get current time in Asia/Kolkata regardless of client timezone
+    const istString = now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
+    const istDate = new Date(istString);
+
+    const hours = istDate.getHours(); // 0-23
+    const minutes = istDate.getMinutes();
+    const totalMinutes = hours * 60 + minutes;
+    const startMinutes = 19 * 60; // 19:00
+    const endMinutes = 20 * 60;   // 20:00
+
+    const withinWindow = totalMinutes >= startMinutes && totalMinutes < endMinutes;
+
+    const istDisplay = istDate.toLocaleTimeString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+
+    return { withinWindow, istDisplay };
+  };
+
+  // Keep frontend button state in sync with IST order window
+  useEffect(() => {
+    const updateWindowState = () => {
+      const { withinWindow, istDisplay } = computeISTOrderWindow();
+      setIsWithinOrderWindow(withinWindow);
+      setCurrentISTTime(istDisplay);
+    };
+
+    updateWindowState();
+
+    // Refresh every 30 seconds so the button/message updates automatically
+    const intervalId = setInterval(updateWindowState, 30000);
+    return () => clearInterval(intervalId);
+  }, []);
 
   // Sync frontend cart to backend before placing order
   const syncCartToBackend = async () => {
@@ -36,7 +79,7 @@ const Checkout = () => {
     try {
       // Clear backend cart first (ignore error if cart doesn't exist)
       try {
-        await axios.delete('https://csk-food-truck.onrender.com/api/cart/clear', {
+        await axios.delete('/api/cart/clear', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
       } catch (clearError) {
@@ -50,7 +93,7 @@ const Checkout = () => {
       for (const item of cart.items) {
         // Extract food ID - handle both id and _id properties
         const foodId = item.food?.id || item.food?._id || item.foodId;
-        
+
         // Only try to sync if foodId looks like a MongoDB ObjectId
         // Frontend custom IDs (like 'seed-1') will be skipped and handled in order creation
         if (!foodId || typeof foodId !== 'string' || !foodId.match(/^[0-9a-fA-F]{24}$/)) {
@@ -84,7 +127,7 @@ const Checkout = () => {
           // Continue with next item - we'll use frontend cart in order creation
         }
       }
-      
+
       // If no items were synced, that's okay - we'll use frontend cart items
       if (syncedCount === 0) {
         console.log('No items synced to backend, will use frontend cart items for order');
@@ -145,7 +188,7 @@ const Checkout = () => {
   const createOrder = async (razorpayOrderId, razorpayPaymentId, razorpaySignature) => {
     setLoading(true);
     setError('');
-    
+
     try {
       // Validate cart is not empty
       if (!cart || !Array.isArray(cart.items) || cart.items.length === 0) {
@@ -170,12 +213,12 @@ const Checkout = () => {
         .map(item => {
           const foodId = item.food?.id || item.food?._id || item.foodId;
           const foodName = item.food?.name;
-          
+
           if (!foodId && !foodName) {
             console.error('Missing food ID and name in cart item:', item);
             return null;
           }
-          
+
           return {
             foodId: foodId ? String(foodId) : null,
             food: item.food, // Include full food object as backup
@@ -210,7 +253,9 @@ const Checkout = () => {
       );
 
       await clearCart();
-      navigate(`/order-confirmation/${res.data._id}`);
+      navigate(`/order-confirmation/${res.data._id}`, {
+        state: { confirmation: res.data?.confirmation || null }
+      });
     } catch (error) {
       console.error('Order creation error:', error);
       setError(error.response?.data?.message || error.message || 'Order creation failed. Please try again.');
@@ -222,6 +267,12 @@ const Checkout = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    // Extra safety on frontend – block submit outside allowed time window
+    if (!isWithinOrderWindow) {
+      setError('Orders are accepted only between 7:00 PM and 8:00 PM IST.');
+      return;
+    }
 
     // Validate cart is not empty
     if (!cart || !Array.isArray(cart.items) || cart.items.length === 0) {
@@ -360,7 +411,13 @@ const Checkout = () => {
 
               <button
                 type="submit"
-                disabled={loading || !cart || !Array.isArray(cart.items) || cart.items.length === 0}
+                disabled={
+                  loading ||
+                  !cart ||
+                  !Array.isArray(cart.items) ||
+                  cart.items.length === 0 ||
+                  !isWithinOrderWindow
+                }
                 className="w-full bg-csk-yellow text-[#0b0b0f] py-3 rounded-lg hover:bg-csk-yellowSoft transition disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-soft ring-1 ring-csk-yellow/60"
               >
                 {loading ? 'Processing...' : 'Place Order'}
@@ -370,7 +427,20 @@ const Checkout = () => {
 
           <div className="bg-[#14151a] rounded-2xl shadow-soft ring-1 ring-white/10 p-6">
             <h2 className="text-xl font-bold text-white mb-4">Order Summary</h2>
-            
+
+            {!isWithinOrderWindow && (
+              <div className="mb-4 bg-[#2b1818] border border-[#fca5a5] text-[#fecaca] px-4 py-3 rounded text-sm">
+                <p className="font-semibold">
+                  Orders are accepted only between 7:00 PM and 8:00 PM IST.
+                </p>
+                {currentISTTime && (
+                  <p className="mt-1 text-xs text-[#fecaca]/80">
+                    Current time (IST): {currentISTTime}
+                  </p>
+                )}
+              </div>
+            )}
+
             {cart && Array.isArray(cart.items) && cart.items.length > 0 ? (
               <>
                 <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">

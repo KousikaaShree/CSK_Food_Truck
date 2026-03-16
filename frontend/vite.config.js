@@ -7,7 +7,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'https://csk-food-truck.onrender.com',
+        target: 'http://localhost:5000',
         changeOrigin: true
       }
     }

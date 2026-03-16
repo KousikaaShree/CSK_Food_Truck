@@ -1,25 +1,71 @@
-import { FiSettings } from 'react-icons/fi';
+import { FiHeart, FiSettings } from 'react-icons/fi';
 
-const FoodCard = ({ image, name, description, price, tags = [], onCustomize }) => {
+const FoodCard = ({
+  image,
+  name,
+  description,
+  price,
+  tags = [],
+  onCustomize,
+  available = true,
+  liked = false,
+  onToggleLike
+}) => {
   const isVeg = tags.includes('veg');
   const isNonVeg = tags.includes('nonveg');
   const isBestseller = tags.includes('bestseller');
+  // Defensive: API or storage may provide "false" as a string
+  const isAvailable = !(available === false || available === 'false' || available === 0 || available === '0');
 
   return (
-    <div className="bg-[#14151a] rounded-2xl shadow-soft ring-1 ring-white/5 overflow-hidden hover:shadow-lift transition transform hover:-translate-y-1 hover:ring-csk-yellow/60 flex flex-col h-full max-w-sm">
+    <div
+      className={[
+        'bg-[#14151a] rounded-2xl shadow-soft ring-1 ring-white/5 overflow-hidden flex flex-col h-full max-w-sm',
+        isAvailable
+          ? 'hover:shadow-lift transition transform hover:-translate-y-1 hover:ring-csk-yellow/60'
+          : 'opacity-60 grayscale',
+      ].join(' ')}
+    >
       {/* Image Section - Made taller for vertical emphasis */}
       <div className="relative overflow-hidden shrink-0">
         <div className="absolute inset-0 rounded-b-[18px] ring-2 ring-transparent hover:ring-csk-yellow/70 transition" />
         <img
           src={image}
           alt={name}
-          className="w-full h-72 object-cover transition duration-300 hover:scale-[1.02]"
+          className={`w-full h-72 object-cover transition duration-300 ${isAvailable ? 'hover:scale-[1.02]' : ''}`}
           loading="lazy"
         />
         {/* Bestseller Badge Only on Image */}
         {isBestseller && (
           <div className="absolute top-2 left-2 bg-csk-yellow text-[#0b0b0f] px-2 py-1 rounded-md text-xs font-bold leading-none shadow-soft">
             ⭐ Bestseller
+          </div>
+        )}
+
+        {typeof onToggleLike === 'function' && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onToggleLike();
+            }}
+            className={[
+              'absolute top-2 right-2 h-10 w-10 rounded-full grid place-items-center ring-1 transition',
+              liked
+                ? 'bg-red-500/20 text-red-300 ring-red-400/30 hover:bg-red-500/30'
+                : 'bg-[#0b0b0f]/45 text-gray-200 ring-white/15 hover:bg-[#0b0b0f]/60'
+            ].join(' ')}
+            aria-label={liked ? 'Remove from favourites' : 'Add to favourites'}
+            title={liked ? 'Remove from favourites' : 'Add to favourites'}
+          >
+            <FiHeart className={`w-5 h-5 ${liked ? 'fill-current' : ''}`} />
+          </button>
+        )}
+
+        {!isAvailable && (
+          <div className="absolute top-12 right-2 bg-[#2b1818]/90 text-[#fecaca] px-2 py-1 rounded-md text-xs font-bold leading-none ring-1 ring-[#fca5a5]/40">
+            Currently Unavailable
           </div>
         )}
       </div>
@@ -86,10 +132,22 @@ const FoodCard = ({ image, name, description, price, tags = [], onCustomize }) =
 
                 <button
                   type="button"
-                  onClick={onCustomize}
-                  className="w-full bg-csk-yellow text-[#0b0b0f] py-2.5 rounded-full hover:bg-csk-yellowSoft transition flex items-center justify-center gap-2 shadow-soft text-sm font-bold"
+                  onClick={isAvailable ? onCustomize : undefined}
+                  disabled={!isAvailable}
+                  className={[
+                    'w-full py-2.5 rounded-full transition flex items-center justify-center gap-2 shadow-soft text-sm font-bold',
+                    isAvailable
+                      ? 'bg-csk-yellow text-[#0b0b0f] hover:bg-csk-yellowSoft'
+                      : 'bg-[#18181f] text-gray-200 cursor-not-allowed ring-1 ring-white/10',
+                  ].join(' ')}
                 >
-                  Add to cart <FiSettings className="w-4 h-4" />
+                  {isAvailable ? (
+                    <>
+                      Add to cart <FiSettings className="w-4 h-4" />
+                    </>
+                  ) : (
+                    'Unavailable'
+                  )}
                 </button>
               </div>
             )}

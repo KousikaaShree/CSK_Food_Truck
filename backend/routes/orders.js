@@ -5,6 +5,66 @@ const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 const Food = require('../models/Food');
 
+const buildOrderConfirmation = (order) => {
+  const istNow = new Date(
+    new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })
+  );
+  const customerName = order?.user?.name || 'Customer';
+  const amount = Number(order?.total || 0);
+  const date = istNow.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+  const time = istNow.toLocaleTimeString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
+
+  const text =
+`Order Confirmation
+
+Hello ${customerName},
+
+Your order has been successfully placed at CSK Food Truck.
+
+Order Details:
+Total Amount: ₹${amount.toFixed(2)}
+Order Date: ${date}
+Order Time: ${time}
+
+Your order will be delivered before 9:00 PM IST.
+
+Thank you for ordering from CSK Food Truck!`;
+
+  return {
+    success: true,
+    restaurantName: 'CSK Food Truck',
+    customerName,
+    deliveryMessage: 'Your order will be delivered before 9:00 PM IST.',
+    orderDetails: { amount, date, time },
+    message: 'Your order has been successfully placed at CSK Food Truck.',
+    text
+  };
+};
+
+// Check if current time in IST is between 7:00 PM and 8:00 PM
+const isWithinOrderWindowIST = () => {
+  // Get current time in Asia/Kolkata regardless of server timezone
+  const istString = new Date().toLocaleString('en-US', {
+    timeZone: 'Asia/Kolkata',
+  });
+  const istDate = new Date(istString);
+
+  const hours = istDate.getHours(); // 0-23
+  const minutes = istDate.getMinutes();
+
+  // Allowed window: 19:00 (inclusive) to 20:00 (exclusive)
+  const totalMinutes = hours * 60 + minutes;
+  const startMinutes = 19 * 60; // 19:00
+  const endMinutes = 20 * 60;   // 20:00
+
+  return totalMinutes >= startMinutes && totalMinutes < endMinutes;
+};
+
 // Generate unique order ID
 const generateOrderId = () => {
   return 'CSK' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substr(2, 5).toUpperCase();
@@ -13,6 +73,13 @@ const generateOrderId = () => {
 // Create order
 router.post('/create', authenticateUser, async (req, res) => {
   try {
+    // Enforce strict ordering time window on backend (IST)
+    if (!isWithinOrderWindowIST()) {
+      return res.status(403).json({
+        message: 'Orders are accepted only between 7:00 PM and 8:00 PM IST.',
+      });
+    }
+
     const { address, paymentMethod, razorpayOrderId, razorpayPaymentId, razorpaySignature, cartItems } = req.body;
     console.log('Creating order with:', { address, paymentMethod, hasCartItems: !!cartItems });
 
@@ -119,7 +186,8 @@ router.post('/create', authenticateUser, async (req, res) => {
       await order.populate('user', 'name email mobile');
       await order.populate('deliveryPartner', 'name phone');
       
-      return res.status(201).json(order);
+      const confirmation = buildOrderConfirmation(order);
+      return res.status(201).json({ ...order.toObject(), confirmation });
     }
     
     // Use backend cart (original flow)
@@ -173,7 +241,8 @@ router.post('/create', authenticateUser, async (req, res) => {
     await order.populate('user', 'name email mobile');
     await order.populate('deliveryPartner', 'name phone');
 
-    res.status(201).json(order);
+    const confirmation = buildOrderConfirmation(order);
+    res.status(201).json({ ...order.toObject(), confirmation });
   } catch (error) {
     console.error('Error in /api/orders/create:', error);
     res.status(500).json({ message: 'Server error', error: error.message });

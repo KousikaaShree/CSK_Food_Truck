@@ -6,6 +6,7 @@ import CustomizeModal from '../components/CustomizeModal';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useMenu, ADMIN_CATEGORIES } from '../context/MenuContext';
+import axios from 'axios';
 
 const Menu = () => {
   // Use MenuContext instead of local axios calls
@@ -22,10 +23,55 @@ const Menu = () => {
   const { addToCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [favouriteIds, setFavouriteIds] = useState(new Set());
+
+  // Load favourites for logged-in user
+  useState(() => {
+    const loadFavourites = async () => {
+      if (!user) {
+        setFavouriteIds(new Set());
+        return;
+      }
+      try {
+        const res = await axios.get('/api/user/favourites', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+        const favs = Array.isArray(res.data?.favourites) ? res.data.favourites : [];
+        setFavouriteIds(new Set(favs.map(f => f?._id).filter(Boolean)));
+      } catch {
+        // ignore - favourites not critical for menu display
+      }
+    };
+    loadFavourites();
+  }, [user]);
+
+  const toggleFavourite = async (food) => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    const foodId = food?._id || food?.id;
+    if (!foodId) return;
+
+    const isLiked = favouriteIds.has(foodId);
+    try {
+      const url = `/api/user/favourites/${foodId}`;
+      const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
+      const res = isLiked ? await axios.delete(url, config) : await axios.post(url, {}, config);
+      const favs = Array.isArray(res.data?.favourites) ? res.data.favourites : [];
+      setFavouriteIds(new Set(favs.map(f => f?._id).filter(Boolean)));
+    } catch {
+      // ignore - leave UI state as-is on failure
+    }
+  };
 
   const handleCustomize = (food) => {
     if (!user) {
       navigate('/login');
+      return;
+    }
+    if (food?.available === false || food?.available === 'false' || food?.available === 0 || food?.available === '0') {
       return;
     }
     setSelectedFood(food);
@@ -159,6 +205,9 @@ const Menu = () => {
                       description={food.description}
                       price={food.price}
                       tags={food.tags} // Pass tags to card
+                      available={food.available}
+                      liked={favouriteIds.has(food._id || food.id)}
+                      onToggleLike={() => toggleFavourite(food)}
                       onCustomize={() => handleCustomize(food)}
                     />
                   ))}

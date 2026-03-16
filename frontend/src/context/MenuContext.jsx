@@ -66,7 +66,7 @@ export const MenuProvider = ({ children }) => {
   useEffect(() => {
     const fetchFoods = async () => {
       try {
-        const res = await fetch('https://csk-food-truck.onrender.com/api/foods');
+        const res = await fetch('/api/foods');
         if (!res.ok) return; // keep defaults if backend not available
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {

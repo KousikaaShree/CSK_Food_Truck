@@ -25,11 +25,20 @@ const userSchema = new mongoose.Schema({
     minlength: 6
   },
   addresses: [{
+    label: {
+      type: String,
+      enum: ['Home', 'Work', 'Other'],
+      default: 'Home'
+    },
     fullAddress: String,
     city: String,
     area: String,
     pincode: String,
     mobile: String
+  }],
+  favourites: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Food'
   }],
   role: {
     type: String,

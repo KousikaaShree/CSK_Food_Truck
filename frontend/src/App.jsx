@@ -36,13 +36,13 @@ function App() {
               <Route path="/contact" element={<><Navbar /><Contact /></>} />
               <Route path="/login" element={<><Navbar /><Login /></>} />
               <Route path="/signup" element={<><Navbar /><Signup /></>} />
-              
+
               {/* User Protected Routes */}
               <Route path="/cart" element={<PrivateRoute><><Navbar /><Cart /></></PrivateRoute>} />
               <Route path="/checkout" element={<PrivateRoute><><Navbar /><Checkout /></></PrivateRoute>} />
               <Route path="/order-confirmation/:orderId" element={<PrivateRoute><><Navbar /><OrderConfirmation /></></PrivateRoute>} />
               <Route path="/dashboard" element={<PrivateRoute><><Navbar /><UserDashboard /></></PrivateRoute>} />
-              
+
               {/* Admin Routes */}
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin/signup" element={<AdminSignup />} />
@@ -50,8 +50,8 @@ function App() {
               <Route path="/admin/menu" element={<AdminRoute><AdminMenu /></AdminRoute>} />
               <Route path="/admin/orders" element={<AdminRoute><AdminOrders /></AdminRoute>} />
               {/* Frontend-only simulation (no backend) */}
-              <Route path="/admin/menu-manager" element={<><Navbar /><AdminMenuManager /></>} />
-              
+              <Route path="/admin/menu-manager" element={<AdminRoute><><Navbar /><AdminMenuManager /></></AdminRoute>} />
+
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </Router>

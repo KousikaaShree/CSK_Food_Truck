@@ -6,20 +6,24 @@ import { FiLogOut, FiPackage, FiDollarSign, FiTrendingUp, FiMenu, FiShoppingBag 
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
+  const [customerOrders, setCustomerOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const { logout } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchStats();
+    fetchStatsAndCustomers();
   }, []);
 
-  const fetchStats = async () => {
+  const fetchStatsAndCustomers = async () => {
     try {
-      const res = await axios.get('/api/admin/dashboard', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}` }
-      });
-      setStats(res.data);
+      const headers = { Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}` };
+      const [statsRes, custRes] = await Promise.all([
+        axios.get('/api/admin/dashboard', { headers }),
+        axios.get('/api/admin/customer-orders', { headers })
+      ]);
+      setStats(statsRes.data);
+      setCustomerOrders(Array.isArray(custRes.data) ? custRes.data : []);
     } catch (error) {
       console.error('Error fetching stats:', error);
     } finally {
@@ -127,6 +131,35 @@ const AdminDashboard = () => {
             </div>
           </div>
         )}
+
+        <div className="mt-8 bg-[#14151a] rounded-2xl shadow-soft ring-1 ring-white/10 p-6">
+          <h2 className="text-xl font-bold text-csk-yellow mb-4">Customer Orders</h2>
+
+          {customerOrders.length === 0 ? (
+            <div className="text-sm text-gray-300">No customers have placed orders yet.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="text-gray-300 border-b border-white/10">
+                    <th className="py-3 pr-4 font-semibold">Customer Name</th>
+                    <th className="py-3 pr-4 font-semibold">Email</th>
+                    <th className="py-3 font-semibold">Orders Placed</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {customerOrders.map((c) => (
+                    <tr key={c.user_id} className="border-b border-white/5 last:border-0">
+                      <td className="py-3 pr-4 text-gray-100 font-medium">{c.name || 'Unknown'}</td>
+                      <td className="py-3 pr-4 text-gray-300">{c.email || '-'}</td>
+                      <td className="py-3 text-csk-yellow font-bold">{c.order_count || 0}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

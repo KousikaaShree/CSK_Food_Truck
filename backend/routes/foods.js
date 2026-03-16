@@ -17,7 +17,8 @@ router.get('/categories', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const { category } = req.query;
-    let query = { available: true };
+    // Return all foods so "Not Available" items still show in user menu
+    let query = {};
     
     if (category) {
       const categoryDoc = await Category.findOne({ name: new RegExp(category, 'i') });

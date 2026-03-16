@@ -319,6 +319,38 @@ router.put('/delivery/:id/location', verifyToken, requireAdmin, async (req, res)
 
 // ========== DASHBOARD ANALYTICS ==========
 
+// Customer orders summary (customers + number of orders)
+router.get('/customer-orders', verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const rows = await Order.aggregate([
+      { $group: { _id: '$user', order_count: { $sum: 1 } } },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      { $unwind: '$user' },
+      {
+        $project: {
+          _id: 0,
+          user_id: '$_id',
+          name: '$user.name',
+          email: '$user.email',
+          order_count: 1
+        }
+      },
+      { $sort: { order_count: -1, name: 1 } }
+    ]);
+
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 // Get dashboard stats
 router.get('/dashboard', verifyToken, requireAdmin, async (req, res) => {
   try {
