@@ -2,6 +2,8 @@ import { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from './AuthContext';
 import { useMenu } from './MenuContext';
+import API_URL from '../config';
+
 
 const CartContext = createContext();
 
@@ -56,7 +58,7 @@ export const CartProvider = ({ children }) => {
 
     if (user) {
       try {
-        await axios.post('/api/cart/add',
+        await axios.post(`${API_URL}/api/cart/add`,
           { foodId, quantity, customizationData: { addOns }, cartItemId },
           { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
         );
@@ -99,7 +101,7 @@ export const CartProvider = ({ children }) => {
   const updateQuantity = async (cartItemId, newQuantity) => {
     if (user) {
       try {
-        await axios.put('/api/cart/update',
+        await axios.put(`${API_URL}/api/cart/update`,
           { cartItemId, quantity: newQuantity },
           { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
         );
@@ -132,7 +134,7 @@ export const CartProvider = ({ children }) => {
   const removeFromCart = async (cartItemId) => {
     if (user) {
       try {
-        await axios.delete(`/api/cart/remove/${cartItemId}`,
+        await axios.delete(`${API_URL}/api/cart/remove/${cartItemId}`,
           { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
         );
       } catch (error) {
@@ -151,7 +153,7 @@ export const CartProvider = ({ children }) => {
   const clearCart = async () => {
     if (user) {
       try {
-        await axios.delete('/api/cart/clear',
+        await axios.delete(`${API_URL}/api/cart/clear`,
           { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
         );
       } catch (error) {

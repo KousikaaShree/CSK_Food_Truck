@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import API_URL from '../config';
+
 
 const OrderConfirmation = () => {
   const { orderId } = useParams();
@@ -24,7 +26,7 @@ const OrderConfirmation = () => {
 
   const fetchOrder = async () => {
     try {
-      const res = await axios.get(`/api/orders/${orderId}`, {
+      const res = await axios.get(`${API_URL}/api/orders/${orderId}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       setOrder(res.data);

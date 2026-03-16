@@ -7,6 +7,8 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useMenu, ADMIN_CATEGORIES } from '../context/MenuContext';
 import axios from 'axios';
+import API_URL from '../config';
+
 
 const Menu = () => {
   // Use MenuContext instead of local axios calls
@@ -33,7 +35,7 @@ const Menu = () => {
         return;
       }
       try {
-        const res = await axios.get('/api/user/favourites', {
+        const res = await axios.get(`${API_URL}/api/user/favourites`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         const favs = Array.isArray(res.data?.favourites) ? res.data.favourites : [];
@@ -56,7 +58,7 @@ const Menu = () => {
 
     const isLiked = favouriteIds.has(foodId);
     try {
-      const url = `/api/user/favourites/${foodId}`;
+      const url = `${API_URL}/api/user/favourites/${foodId}`;
       const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
       const res = isLiked ? await axios.delete(url, config) : await axios.post(url, {}, config);
       const favs = Array.isArray(res.data?.favourites) ? res.data.favourites : [];

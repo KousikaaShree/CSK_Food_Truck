@@ -1,4 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import API_URL from '../config';
+
 
 const MenuContext = createContext(null);
 
@@ -66,7 +68,7 @@ export const MenuProvider = ({ children }) => {
   useEffect(() => {
     const fetchFoods = async () => {
       try {
-        const res = await fetch('/api/foods');
+        const res = await fetch(`${API_URL}/api/foods`);
         if (!res.ok) return; // keep defaults if backend not available
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {

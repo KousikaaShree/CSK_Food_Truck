@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { FiLogOut, FiPackage, FiDollarSign, FiTrendingUp, FiMenu, FiShoppingBag } from 'react-icons/fi';
+import API_URL from '../../config';
+
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
@@ -19,8 +21,8 @@ const AdminDashboard = () => {
     try {
       const headers = { Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}` };
       const [statsRes, custRes] = await Promise.all([
-        axios.get('/api/admin/dashboard', { headers }),
-        axios.get('/api/admin/customer-orders', { headers })
+        axios.get(`${API_URL}/api/admin/dashboard`, { headers }),
+        axios.get(`${API_URL}/api/admin/customer-orders`, { headers })
       ]);
       setStats(statsRes.data);
       setCustomerOrders(Array.isArray(custRes.data) ? custRes.data : []);

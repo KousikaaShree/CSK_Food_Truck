@@ -5,6 +5,8 @@ import { FiEdit2, FiHeart, FiMapPin, FiPackage, FiTrash2 } from 'react-icons/fi'
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useMenu } from '../context/MenuContext';
+import API_URL from '../config';
+
 
 const UserDashboard = () => {
   const { user: authUser } = useAuth();
@@ -47,8 +49,8 @@ const UserDashboard = () => {
   const fetchOrdersAndProfile = async () => {
     try {
       const [ordersRes, profileRes] = await Promise.all([
-        axios.get('/api/orders/my-orders', authHeaders),
-        axios.get('/api/user/me', authHeaders)
+        axios.get(`${API_URL}/api/orders/my-orders`, authHeaders),
+        axios.get(`${API_URL}/api/user/me`, authHeaders)
       ]);
       setOrders(Array.isArray(ordersRes.data) ? ordersRes.data : []);
 
@@ -125,7 +127,7 @@ const UserDashboard = () => {
 
   const saveProfile = async () => {
     try {
-      const res = await axios.put('/api/user/me', profileDraft, authHeaders);
+      const res = await axios.put(`${API_URL}/api/user/me`, profileDraft, authHeaders);
       const updated = res.data?.user || null;
       if (updated) {
         setProfile(updated);
@@ -165,10 +167,10 @@ const UserDashboard = () => {
   const saveAddress = async () => {
     try {
       if (editingAddressId) {
-        const res = await axios.put(`/api/user/addresses/${editingAddressId}`, addressDraft, authHeaders);
+        const res = await axios.put(`${API_URL}/api/user/addresses/${editingAddressId}`, addressDraft, authHeaders);
         setAddresses(res.data?.addresses || []);
       } else {
-        const res = await axios.post('/api/user/addresses', addressDraft, authHeaders);
+        const res = await axios.post(`${API_URL}/api/user/addresses`, addressDraft, authHeaders);
         setAddresses(res.data?.addresses || []);
       }
       setAddressFormOpen(false);
@@ -180,7 +182,7 @@ const UserDashboard = () => {
 
   const deleteAddress = async (addressId) => {
     try {
-      const res = await axios.delete(`/api/user/addresses/${addressId}`, authHeaders);
+      const res = await axios.delete(`${API_URL}/api/user/addresses/${addressId}`, authHeaders);
       setAddresses(res.data?.addresses || []);
     } catch (error) {
       setProfileError(error.response?.data?.message || 'Failed to delete address');
@@ -189,7 +191,7 @@ const UserDashboard = () => {
 
   const removeFavourite = async (foodId) => {
     try {
-      const res = await axios.delete(`/api/user/favourites/${foodId}`, authHeaders);
+      const res = await axios.delete(`${API_URL}/api/user/favourites/${foodId}`, authHeaders);
       setFavourites(res.data?.favourites || []);
     } catch (error) {
       setProfileError(error.response?.data?.message || 'Failed to update favourites');

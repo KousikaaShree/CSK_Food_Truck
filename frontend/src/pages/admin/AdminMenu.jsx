@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { FiEdit, FiTrash2, FiPlus } from 'react-icons/fi';
+import API_URL from '../../config';
+
 
 const AdminMenu = () => {
   const [foods, setFoods] = useState([]);
@@ -25,7 +27,7 @@ const AdminMenu = () => {
 
   const fetchFoods = async () => {
     try {
-      const res = await axios.get('/api/admin/foods', {
+      const res = await axios.get(`${API_URL}/api/admin/foods`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}` }
       });
       setFoods(res.data);
@@ -38,7 +40,7 @@ const AdminMenu = () => {
 
   const fetchCategories = async () => {
     try {
-      const res = await axios.get('/api/admin/categories', {
+      const res = await axios.get(`${API_URL}/api/admin/categories`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}` }
       });
       console.log('Categories fetched:', res.data);
@@ -74,14 +76,14 @@ const AdminMenu = () => {
 
     try {
       if (editingFood) {
-        await axios.put(`/api/admin/foods/${editingFood._id}`, formDataToSend, {
+        await axios.put(`${API_URL}/api/admin/foods/${editingFood._id}`, formDataToSend, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}`,
             'Content-Type': 'multipart/form-data'
           }
         });
       } else {
-        await axios.post('/api/admin/foods', formDataToSend, {
+        await axios.post(`${API_URL}/api/admin/foods`, formDataToSend, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}`,
             'Content-Type': 'multipart/form-data'
@@ -127,7 +129,7 @@ const AdminMenu = () => {
     if (!window.confirm('Are you sure you want to delete this item?')) return;
 
     try {
-      await axios.delete(`/api/admin/foods/${id}`, {
+      await axios.delete(`${API_URL}/api/admin/foods/${id}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}` }
       });
       fetchFoods();

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import API_URL from '../config';
+
 
 const Checkout = () => {
   const { cart, clearCart } = useCart();
@@ -79,7 +81,7 @@ const Checkout = () => {
     try {
       // Clear backend cart first (ignore error if cart doesn't exist)
       try {
-        await axios.delete('/api/cart/clear', {
+        await axios.delete(`${API_URL}/api/cart/clear`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
       } catch (clearError) {
@@ -108,7 +110,7 @@ const Checkout = () => {
           };
 
           const response = await axios.post(
-            '/api/cart/add',
+            `${API_URL}/api/cart/add`,
             {
               foodId: String(foodId),
               quantity: item.quantity,
@@ -152,7 +154,7 @@ const Checkout = () => {
   const handleRazorpayPayment = async () => {
     try {
       const res = await axios.post(
-        '/api/payment/create-order',
+        `${API_URL}/api/payment/create-order`,
         { amount: total },
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );
@@ -247,7 +249,7 @@ const Checkout = () => {
       };
 
       const res = await axios.post(
-        '/api/orders/create',
+        `${API_URL}/api/orders/create`,
         orderData,
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );

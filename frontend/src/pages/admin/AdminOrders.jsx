@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { FiPackage, FiTruck, FiCheckCircle } from 'react-icons/fi';
+import API_URL from '../../config';
+
 
 const AdminOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -16,7 +18,7 @@ const AdminOrders = () => {
 
   const fetchOrders = async () => {
     try {
-      const res = await axios.get('/api/admin/orders', {
+      const res = await axios.get(`${API_URL}/api/admin/orders`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}` }
       });
       setOrders(res.data);
@@ -29,7 +31,7 @@ const AdminOrders = () => {
 
   const fetchDeliveryPartners = async () => {
     try {
-      const res = await axios.get('/api/admin/delivery', {
+      const res = await axios.get(`${API_URL}/api/admin/delivery`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
       });
       setDeliveryPartners(res.data);
@@ -41,7 +43,7 @@ const AdminOrders = () => {
   const updateOrderStatus = async (orderId, status) => {
     try {
       await axios.put(
-        `/api/admin/orders/${orderId}/status`,
+        `${API_URL}/api/admin/orders/${orderId}/status`,
         { status },
         { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } }
       );
@@ -55,7 +57,7 @@ const AdminOrders = () => {
   const assignDeliveryPartner = async (orderId, deliveryPartnerId) => {
     try {
       await axios.put(
-        `/api/admin/orders/${orderId}/assign-delivery`,
+        `${API_URL}/api/admin/orders/${orderId}/assign-delivery`,
         { deliveryPartnerId },
         { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } }
       );
