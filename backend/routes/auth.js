@@ -67,9 +67,11 @@ router.post('/login', [
     }
 
     const { email, password } = req.body;
+    console.log(req.body);
 
     // Find user
     const user = await User.findOne({ email });
+    console.log(user);
     if (!user) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
@@ -81,6 +83,12 @@ router.post('/login', [
     }
 
     const token = generateToken(user._id);
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "None"
+    });
     res.json({
       token,
       user: {

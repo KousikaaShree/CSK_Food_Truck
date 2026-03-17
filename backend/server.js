@@ -4,15 +4,25 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
 const multer = require('multer');
+const cookieParser = require('cookie-parser');
 
 dotenv.config();
 
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    "https://csk-food-truck.vercel.app", 
+    "https://your-frontend.vercel.app", 
+    "http://localhost:5173",
+    process.env.FRONTEND_URL
+  ].filter(Boolean),
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Static uploads (fallback when Cloudinary isn't configured)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
