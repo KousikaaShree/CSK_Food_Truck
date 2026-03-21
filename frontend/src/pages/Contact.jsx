@@ -54,16 +54,17 @@ const Contact = () => {
 
           {/* Map + info */}
           <div className="space-y-6">
-            <div className="bg-[#14151a] rounded-2xl shadow-soft ring-1 ring-white/10 overflow-hidden">
-              <div className="h-64 bg-gradient-to-br from-[#0f0f14] to-[#15151d] flex items-center justify-center">
-                <div className="text-center">
-                  <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-csk-yellow/25 ring-1 ring-csk-yellow/40">
-                    <FiMapPin className="text-csk-yellow" />
-                  </div>
-                  <div className="mt-3 font-medium text-white">Google Map Placeholder</div>
-                  <div className="mt-1 text-sm text-gray-400">Add your location here when ready.</div>
-                </div>
-              </div>
+            <div className="bg-[#14151a] rounded-2xl shadow-soft ring-1 ring-white/10 overflow-hidden h-64">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3929.6202476054!2d77.4764!3d10.0104!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTDCsDAwJzM3LjQiTiA3N8KwMjgnMzUuMCJF!5e0!3m2!1sen!2sin!4v1711030000000!5m2!1sen!2sin"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen=""
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="CSK Food Truck Location"
+              ></iframe>
             </div>
 
             <div className="bg-[#14151a] rounded-2xl shadow-soft ring-1 ring-white/10 p-6">

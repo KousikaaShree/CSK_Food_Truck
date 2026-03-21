@@ -48,7 +48,11 @@ export const AuthProvider = ({ children }) => {
       const res = await axios.post(`${API_URL}/api/auth/login`, { email, password });
       localStorage.setItem('token', res.data.token);
       setUser(res.data.user);
-      return { success: true };
+      if (res.data.user.role === 'admin') {
+        localStorage.setItem('adminToken', res.data.token);
+        setAdmin(res.data.user);
+      }
+      return { success: true, role: res.data.user.role };
     } catch (error) {
       return { success: false, message: error.response?.data?.message || 'Login failed' };
     }
@@ -98,7 +102,11 @@ export const AuthProvider = ({ children }) => {
       const res = await axios.post(`${API_URL}/api/auth/google/user`, { idToken: credential });
       localStorage.setItem('token', res.data.token);
       setUser(res.data.user);
-      return { success: true };
+      if (res.data.user.role === 'admin') {
+        localStorage.setItem('adminToken', res.data.token);
+        setAdmin(res.data.user);
+      }
+      return { success: true, role: res.data.user.role };
     } catch (error) {
       return { success: false, message: error.response?.data?.message || 'Google Login failed' };
     }

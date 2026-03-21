@@ -59,6 +59,10 @@ const orderSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  deliveryFee: {
+    type: Number,
+    default: 0
+  },
   total: {
     type: Number,
     required: true

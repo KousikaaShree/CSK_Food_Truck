@@ -13,8 +13,6 @@ import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import OrderConfirmation from './pages/OrderConfirmation';
 import UserDashboard from './pages/UserDashboard';
-import AdminLogin from './pages/admin/AdminLogin';
-import AdminSignup from './pages/admin/AdminSignup';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminMenu from './pages/admin/AdminMenu';
 import AdminOrders from './pages/admin/AdminOrders';
@@ -43,13 +41,11 @@ function App() {
               <Route path="/order-confirmation/:orderId" element={<PrivateRoute><><Navbar /><OrderConfirmation /></></PrivateRoute>} />
               <Route path="/dashboard" element={<PrivateRoute><><Navbar /><UserDashboard /></></PrivateRoute>} />
 
-              {/* Admin Routes */}
-              <Route path="/admin/login" element={<AdminLogin />} />
-              <Route path="/admin/signup" element={<AdminSignup />} />
+              {/* Admin Routes — protected by AdminRoute (role === 'admin') */}
+              <Route path="/admin" element={<Navigate to="/admin/dashboard" />} />
               <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
               <Route path="/admin/menu" element={<AdminRoute><AdminMenu /></AdminRoute>} />
               <Route path="/admin/orders" element={<AdminRoute><AdminOrders /></AdminRoute>} />
-              {/* Frontend-only simulation (no backend) */}
               <Route path="/admin/menu-manager" element={<AdminRoute><><Navbar /><AdminMenuManager /></></AdminRoute>} />
 
               <Route path="*" element={<Navigate to="/" />} />

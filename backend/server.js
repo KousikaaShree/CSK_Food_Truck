@@ -16,6 +16,7 @@ app.use(cors({
     "https://csk-food-truck.vercel.app", 
     "https://your-frontend.vercel.app", 
     "http://localhost:5173",
+    "http://localhost:3000",
     process.env.FRONTEND_URL
   ].filter(Boolean),
   credentials: true
@@ -39,6 +40,8 @@ app.use('/api/orders', require('./routes/orders'));
 app.use('/api/user', require('./routes/user'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/payment', require('./routes/payment'));
+app.use('/api/delivery', require('./routes/delivery'));
+
 
 // Serve frontend in production
 // We'll enable this by default for the deployed version

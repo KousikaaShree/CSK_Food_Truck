@@ -22,7 +22,7 @@ const Login = () => {
     const result = await login(formData.email, formData.password);
 
     if (result.success) {
-      navigate('/');
+      navigate(result.role === 'admin' ? '/admin/dashboard' : '/dashboard');
     } else {
       setError(result.message);
     }
@@ -35,7 +35,7 @@ const Login = () => {
     setLoading(true);
     const result = await googleLoginUser(credentialResponse.credential);
     if (result.success) {
-      navigate('/');
+      navigate(result.role === 'admin' ? '/admin/dashboard' : '/dashboard');
     } else {
       setError(result.message);
     }

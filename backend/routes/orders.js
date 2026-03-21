@@ -4,6 +4,7 @@ const { authenticateUser } = require('../middleware/auth');
 const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 const Food = require('../models/Food');
+const { sendOrderConfirmationEmail } = require('../utils/sendEmail');
 
 const buildOrderConfirmation = (order) => {
   const istNow = new Date(
@@ -74,14 +75,17 @@ const generateOrderId = () => {
 router.post('/create', authenticateUser, async (req, res) => {
   try {
     // Enforce strict ordering time window on backend (IST)
+    /*
     if (!isWithinOrderWindowIST()) {
       return res.status(403).json({
         message: 'Orders are accepted only between 7:00 PM and 8:00 PM IST.',
       });
     }
+    */
 
-    const { address, paymentMethod, razorpayOrderId, razorpayPaymentId, razorpaySignature, cartItems } = req.body;
-    console.log('Creating order with:', { address, paymentMethod, hasCartItems: !!cartItems });
+    const { address, paymentMethod, razorpayOrderId, razorpayPaymentId, razorpaySignature, cartItems, deliveryFee } = req.body;
+    const finalDeliveryFee = Number(deliveryFee) || 0;
+    console.log('Creating order with:', { address, paymentMethod, hasCartItems: !!cartItems, deliveryFee: finalDeliveryFee });
 
     let cart = await Cart.findOne({ user: req.user._id }).populate('items.food');
     
@@ -163,7 +167,7 @@ router.post('/create', authenticateUser, async (req, res) => {
       }
       
       const tax = calculatedSubtotal * 0.18;
-      const total = calculatedSubtotal + tax;
+      const total = calculatedSubtotal + tax + finalDeliveryFee;
       
       const order = new Order({
         orderId: generateOrderId(),
@@ -177,6 +181,7 @@ router.post('/create', authenticateUser, async (req, res) => {
         razorpaySignature: paymentMethod === 'razorpay' ? razorpaySignature : undefined,
         subtotal: calculatedSubtotal,
         tax,
+        deliveryFee: finalDeliveryFee,
         total,
         estimatedDeliveryTime: new Date(Date.now() + 45 * 60 * 1000)
       });
@@ -185,6 +190,9 @@ router.post('/create', authenticateUser, async (req, res) => {
       await order.populate('items.food', 'name image');
       await order.populate('user', 'name email mobile');
       await order.populate('deliveryPartner', 'name phone');
+      
+      // Send email notification (non-blocking)
+      sendOrderConfirmationEmail(order);
       
       const confirmation = buildOrderConfirmation(order);
       return res.status(201).json({ ...order.toObject(), confirmation });
@@ -198,7 +206,7 @@ router.post('/create', authenticateUser, async (req, res) => {
 
     const subtotal = cart.total;
     const tax = subtotal * 0.18; // 18% GST
-    const total = subtotal + tax;
+    const total = subtotal + tax + finalDeliveryFee;
 
     const orderItems = cart.items.map(item => {
       if (!item.food) {
@@ -226,6 +234,7 @@ router.post('/create', authenticateUser, async (req, res) => {
       razorpaySignature: paymentMethod === 'razorpay' ? razorpaySignature : undefined,
       subtotal,
       tax,
+      deliveryFee: finalDeliveryFee,
       total,
       estimatedDeliveryTime: new Date(Date.now() + 45 * 60 * 1000) // 45 minutes
     });
@@ -240,6 +249,9 @@ router.post('/create', authenticateUser, async (req, res) => {
     await order.populate('items.food', 'name image');
     await order.populate('user', 'name email mobile');
     await order.populate('deliveryPartner', 'name phone');
+
+    // Send email notification (non-blocking)
+    sendOrderConfirmationEmail(order);
 
     const confirmation = buildOrderConfirmation(order);
     res.status(201).json({ ...order.toObject(), confirmation });

@@ -16,7 +16,7 @@ const AdminRoute = ({ children }) => {
     return <Navigate to="/dashboard" />;
   }
 
-  return <Navigate to="/admin/login" />;
+  return <Navigate to="/login" />;
 };
 
 export default AdminRoute;

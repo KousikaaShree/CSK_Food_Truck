@@ -9,6 +9,12 @@ const { OAuth2Client } = require('google-auth-library');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+// Admin email allowlist — these emails are automatically assigned the 'admin' role
+const ADMIN_EMAILS = [
+  'kousikaashree.6607@gmail.com',
+  'csktrucktheni@gmail.com'
+];
+
 // Generate JWT Token
 const generateToken = (userId, role = 'user') => {
   return jwt.sign({ id: userId, role }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -82,7 +88,14 @@ router.post('/login', [
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    const token = generateToken(user._id);
+    // Auto-detect admin by email allowlist
+    const expectedRole = ADMIN_EMAILS.includes(email.toLowerCase()) ? 'admin' : 'user';
+    if (user.role !== expectedRole) {
+      user.role = expectedRole;
+      await user.save();
+    }
+
+    const token = generateToken(user._id, user.role);
 
     res.cookie("token", token, {
       httpOnly: true,
@@ -194,22 +207,26 @@ router.post('/google/user', async (req, res) => {
 
     const { name, email, picture, sub: googleId } = ticket.getPayload();
 
+    // Auto-detect admin by email allowlist
+    const detectedRole = ADMIN_EMAILS.includes(email.toLowerCase()) ? 'admin' : 'user';
+
     // Find or create user
     let user = await User.findOne({ email });
     if (!user) {
-      // Create new user (mobile is required in schema, so we'll use a placeholder or handle it)
-      // Note: Since mobile is required, we might need to prompt for it later or make it optional in schema
       user = new User({
         name,
         email,
         mobile: 'Not Provided',
         password: Math.random().toString(36).slice(-10),
-        role: 'user' // Explicitly set role
+        role: detectedRole
       });
+      await user.save();
+    } else if (user.role !== detectedRole) {
+      user.role = detectedRole;
       await user.save();
     }
 
-    const token = generateToken(user._id, 'user');
+    const token = generateToken(user._id, user.role);
     res.json({
       token,
       user: {
