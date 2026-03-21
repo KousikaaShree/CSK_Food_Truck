@@ -135,7 +135,40 @@ const AdminDashboard = () => {
         )}
 
         <div className="mt-8 bg-[#14151a] rounded-2xl shadow-soft ring-1 ring-white/10 p-6">
-          <h2 className="text-xl font-bold text-csk-yellow mb-4">Customer Orders</h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold text-csk-yellow">Customer Order Counts</h2>
+            <button 
+              onClick={async () => {
+                try {
+                  const res = await axios.get(`${API_URL}/api/admin/customer-orders?exportPdf=true`, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}` },
+                    responseType: 'blob'
+                  });
+
+                  if (res.data.type === 'application/json') {
+                    const text = await res.data.text();
+                    const error = JSON.parse(text);
+                    alert('Error: ' + error.message);
+                    return;
+                  }
+
+                  const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+                  const link = document.createElement('a');
+                  link.href = url;
+                  link.setAttribute('download', 'Customer_Order_Report.pdf');
+                  document.body.appendChild(link);
+                  link.click();
+                  link.remove();
+                  window.URL.revokeObjectURL(url);
+                } catch (error) {
+                  alert('Error downloading report');
+                }
+              }}
+              className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-xl transition text-sm border border-white/10"
+            >
+              <FiDollarSign className="text-csk-yellow" /> Download PDF Report
+            </button>
+          </div>
 
           {customerOrders.length === 0 ? (
             <div className="text-sm text-gray-300">No customers have placed orders yet.</div>

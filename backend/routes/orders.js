@@ -173,7 +173,11 @@ router.post('/create', authenticateUser, async (req, res) => {
         orderId: generateOrderId(),
         user: req.user._id,
         items: validatedItems,
-        address,
+        address: {
+          ...address,
+          name: req.user.name,
+          email: req.user.email
+        },
         paymentMethod,
         paymentStatus: paymentMethod === 'cod' ? 'pending' : 'paid',
         razorpayOrderId: paymentMethod === 'razorpay' ? razorpayOrderId : undefined,
@@ -226,7 +230,11 @@ router.post('/create', authenticateUser, async (req, res) => {
       orderId: generateOrderId(),
       user: req.user._id,
       items: orderItems,
-      address,
+      address: {
+        ...address,
+        name: req.user.name,
+        email: req.user.email
+      },
       paymentMethod,
       paymentStatus: paymentMethod === 'cod' ? 'pending' : 'paid',
       razorpayOrderId: paymentMethod === 'razorpay' ? razorpayOrderId : undefined,

@@ -1,27 +1,53 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { FiPackage, FiTruck, FiCheckCircle } from 'react-icons/fi';
+import { FiPackage, FiFilter, FiDownload, FiCalendar, FiUser, FiSearch, FiChevronDown, FiChevronRight, FiFileText } from 'react-icons/fi';
 import API_URL from '../../config';
-
+import moment from 'moment';
 
 const AdminOrders = () => {
   const [orders, setOrders] = useState([]);
-  const [deliveryPartners, setDeliveryPartners] = useState([]);
+  const [groupedOrders, setGroupedOrders] = useState({});
+  const [viewMode, setViewMode] = useState('list'); // 'list' or 'grouped'
   const [loading, setLoading] = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [filters, setFilters] = useState({
+    orderId: '',
+    customerName: '',
+    email: '',
+    fromDate: '',
+    toDate: ''
+  });
+  const [pagination, setPagination] = useState({
+    page: 1,
+    totalPages: 1,
+    totalOrders: 0
+  });
+  const [expandedYears, setExpandedYears] = useState({});
+  const [expandedMonths, setExpandedMonths] = useState({});
+  const [expandedDays, setExpandedDays] = useState({});
 
   useEffect(() => {
-    fetchOrders();
-    fetchDeliveryPartners();
-  }, []);
+    if (viewMode === 'list') {
+      fetchOrders();
+    } else {
+      fetchGroupedOrders();
+    }
+  }, [viewMode, pagination.page, filters]);
 
   const fetchOrders = async () => {
+    setLoading(true);
     try {
+      const { orderId, customerName, email, fromDate, toDate } = filters;
       const res = await axios.get(`${API_URL}/api/admin/orders`, {
+        params: { page: pagination.page, orderId, customerName, email, fromDate, toDate },
         headers: { Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}` }
       });
-      setOrders(res.data);
+      setOrders(res.data.orders);
+      setPagination(prev => ({ 
+        ...prev, 
+        totalPages: res.data.totalPages, 
+        totalOrders: res.data.totalOrders 
+      }));
     } catch (error) {
       console.error('Error fetching orders:', error);
     } finally {
@@ -29,222 +55,291 @@ const AdminOrders = () => {
     }
   };
 
-  const fetchDeliveryPartners = async () => {
+  const fetchGroupedOrders = async () => {
+    setLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/api/admin/delivery`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
+      const res = await axios.get(`${API_URL}/api/admin/orders/grouped`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}` }
       });
-      setDeliveryPartners(res.data);
+      setGroupedOrders(res.data);
     } catch (error) {
-      console.error('Error fetching delivery partners:', error);
+      console.error('Error fetching grouped orders:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const updateOrderStatus = async (orderId, status) => {
+  const handleFilterChange = (e) => {
+    setFilters({ ...filters, [e.target.name]: e.target.value });
+    setPagination({ ...pagination, page: 1 });
+  };
+
+  const downloadOrderPDF = async (orderId) => {
     try {
-      await axios.put(
-        `${API_URL}/api/admin/orders/${orderId}/status`,
-        { status },
-        { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } }
-      );
-      fetchOrders();
+      const res = await axios.get(`${API_URL}/api/admin/orders/${orderId}/pdf`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}` },
+        responseType: 'blob'
+      });
+      
+      // Check if response is actually a PDF
+      if (res.data.type === 'application/json') {
+        const text = await res.data.text();
+        const error = JSON.parse(text);
+        alert('Error: ' + error.message);
+        return;
+      }
+
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Order_${orderId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
     } catch (error) {
-      alert('Error updating order status');
-      console.error(error);
+      console.error('Download error:', error);
+      alert('Error downloading PDF. Check console for details.');
     }
   };
 
-  const assignDeliveryPartner = async (orderId, deliveryPartnerId) => {
+  const downloadBulkPDF = async () => {
     try {
-      await axios.put(
-        `${API_URL}/api/admin/orders/${orderId}/assign-delivery`,
-        { deliveryPartnerId },
-        { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } }
-      );
-      fetchOrders();
+      const { orderId, customerName, email, fromDate, toDate } = filters;
+      const res = await axios.get(`${API_URL}/api/admin/orders/export/pdf`, {
+        params: { orderId, customerName, email, fromDate, toDate },
+        headers: { Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}` },
+        responseType: 'blob'
+      });
+
+      if (res.data.type === 'application/json') {
+        const text = await res.data.text();
+        const error = JSON.parse(text);
+        alert('Error: ' + error.message);
+        return;
+      }
+
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'Orders_Report.pdf');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
     } catch (error) {
-      alert('Error assigning delivery partner');
-      console.error(error);
+      alert('Error downloading report');
     }
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      placed: 'bg-csk-yellow/15 text-csk-yellow',
-      preparing: 'bg-csk-yellow/25 text-csk-yellow',
-      out_for_delivery: 'bg-csk-yellow/25 text-csk-yellow',
-      delivered: 'bg-[#18181f] text-gray-100',
-      cancelled: 'bg-[#18181f] text-gray-400'
-    };
-    return colors[status] || 'bg-[#18181f] text-gray-200';
-  };
-
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#0b0b0e] via-[#0f0f14] to-[#0b0b0e] text-white">Loading...</div>;
-  }
+  const toggleYear = (year) => setExpandedYears(v => ({ ...v, [year]: !v[year] }));
+  const toggleMonth = (year, month) => setExpandedMonths(v => ({ ...v, [`${year}-${month}`]: !v[`${year}-${month}`] }));
+  const toggleDay = (year, month, day) => setExpandedDays(v => ({ ...v, [`${year}-${month}-${day}`]: !v[`${year}-${month}-${day}`] }));
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0b0b0e] via-[#0f0f14] to-[#0b0b0e] text-white">
-      <nav className="bg-gradient-to-r from-[#0d0d10]/95 via-[#111118]/95 to-[#0b0b0f]/95 shadow-soft backdrop-blur">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/admin/dashboard" className="text-2xl font-bold text-white">
-              Admin Panel
-            </Link>
-            <Link to="/admin/dashboard" className="text-gray-100/85 hover:text-csk-yellow">
-              Back to Dashboard
-            </Link>
-          </div>
+    <div className="min-h-screen bg-[#0b0b0e] text-white">
+      <nav className="border-b border-white/5 bg-[#0d0d10]/95 backdrop-blur sticky top-0 z-30">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <Link to="/admin/dashboard" className="text-2xl font-bold bg-gradient-to-r from-csk-yellow to-yellow-500 bg-clip-text text-transparent">
+            Admin Panel
+          </Link>
+          <Link to="/admin/dashboard" className="text-gray-400 hover:text-white transition">Back to Dashboard</Link>
         </div>
       </nav>
 
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-csk-yellow mb-8">Order Management</h1>
+      <div className="main-content container mx-auto px-4 py-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <h1 className="text-3xl font-extrabold text-white flex items-center gap-3">
+            <FiPackage className="text-csk-yellow" /> Orders Management
+          </h1>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setViewMode(viewMode === 'list' ? 'grouped' : 'list')}
+              className="px-4 py-2 bg-[#1a1b23] border border-white/10 rounded-xl hover:bg-[#252631] transition text-sm flex items-center gap-2"
+            >
+              <FiCalendar /> {viewMode === 'list' ? 'Grouped View' : 'List View'}
+            </button>
+            <button 
+              onClick={downloadBulkPDF}
+              className="px-4 py-2 bg-csk-yellow text-[#0b0b0f] rounded-xl hover:bg-yellow-500 transition text-sm font-bold flex items-center gap-2"
+            >
+              <FiDownload /> Export PDF
+            </button>
+          </div>
+        </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        {/* Filters */}
+        <div className="bg-[#14151a] p-6 rounded-2xl border border-white/5 shadow-xl mb-8">
+          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+            <FiFilter /> Filters
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 ml-1">Order ID</label>
+              <input name="orderId" placeholder="Search ID..." value={filters.orderId} onChange={handleFilterChange} className="w-full bg-[#0f0f14] border border-white/10 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-csk-yellow/50 outline-none" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 ml-1">Customer Name</label>
+              <input name="customerName" placeholder="Name..." value={filters.customerName} onChange={handleFilterChange} className="w-full bg-[#0f0f14] border border-white/10 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-csk-yellow/50 outline-none" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 ml-1">Email</label>
+              <input name="email" placeholder="Email..." value={filters.email} onChange={handleFilterChange} className="w-full bg-[#0f0f14] border border-white/10 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-csk-yellow/50 outline-none" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 ml-1">From Date</label>
+              <input type="date" name="fromDate" value={filters.fromDate} onChange={handleFilterChange} className="w-full bg-[#0f0f14] border border-white/10 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-csk-yellow/50 outline-none" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 ml-1">To Date</label>
+              <input type="date" name="toDate" value={filters.toDate} onChange={handleFilterChange} className="w-full bg-[#0f0f14] border border-white/10 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-csk-yellow/50 outline-none" />
+            </div>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-20">
+             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-csk-yellow"></div>
+          </div>
+        ) : viewMode === 'list' ? (
           <div className="space-y-4">
-            {orders.map((order) => (
-              <div
-                key={order._id}
-                className="bg-[#14151a] rounded-2xl shadow-soft ring-1 ring-white/10 p-6 cursor-pointer hover:shadow-lift transition"
-                onClick={() => setSelectedOrder(order)}
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="font-bold text-white">Order #{order.orderId}</h3>
-                    <p className="text-sm text-gray-400">
-                      {order.user?.name} - {order.user?.email}
-                    </p>
-                    <p className="text-sm text-gray-400">
-                      {new Date(order.createdAt).toLocaleString()}
-                    </p>
+            <div className="bg-[#14151a] rounded-2xl border border-white/5 overflow-hidden">
+               <table className="w-full text-left">
+                  <thead className="bg-[#1a1b23] text-gray-400 text-xs uppercase">
+                    <tr>
+                       <th className="px-6 py-4">Order ID</th>
+                       <th className="px-6 py-4">Customer</th>
+                       <th className="px-6 py-4">Total</th>
+                       <th className="px-6 py-4">Status</th>
+                       <th className="px-6 py-4">Date</th>
+                       <th className="px-6 py-4">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {orders.map(order => (
+                      <tr key={order._id} className="hover:bg-white/[0.02] transition group">
+                        <td className="px-6 py-4 font-mono text-csk-yellow text-sm">{order.orderId}</td>
+                        <td className="px-6 py-4">
+                           <div className="text-sm font-medium">{order.address?.name || order.user?.name}</div>
+                           <div className="text-xs text-gray-500">{order.address?.email || order.user?.email}</div>
+                        </td>
+                        <td className="px-6 py-4 font-bold text-sm">₹{order.total.toFixed(2)}</td>
+                        <td className="px-6 py-4">
+                           <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase ${
+                             order.status === 'delivered' ? 'bg-green-500/10 text-green-500' :
+                             order.status === 'cancelled' ? 'bg-red-500/10 text-red-500' :
+                             'bg-csk-yellow/10 text-csk-yellow'
+                           }`}>
+                             {order.status}
+                           </span>
+                        </td>
+                        <td className="px-6 py-4 text-xs text-gray-400">{moment(order.createdAt).format('DD MMM YYYY, hh:mm A')}</td>
+                        <td className="px-6 py-4">
+                           <button 
+                             onClick={() => downloadOrderPDF(order._id)}
+                             className="p-2 bg-[#1a1b23] rounded-lg hover:bg-csk-yellow hover:text-[#0b0b0f] transition group"
+                             title="Download PDF"
+                           >
+                             <FiFileText size={18} />
+                           </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+               </table>
+            </div>
+            
+            {/* Pagination */}
+            <div className="flex justify-between items-center mt-6">
+               <p className="text-sm text-gray-500 uppercase tracking-widest font-bold">Showing {orders.length} of {pagination.totalOrders} orders</p>
+               <div className="flex gap-2">
+                  <button 
+                    disabled={pagination.page === 1}
+                    onClick={() => setPagination({...pagination, page: pagination.page - 1})}
+                    className="px-4 py-2 bg-[#14151a] rounded-xl border border-white/5 disabled:opacity-50 hover:bg-[#1a1b23] transition"
+                  >Prev</button>
+                  <button 
+                    disabled={pagination.page >= pagination.totalPages}
+                    onClick={() => setPagination({...pagination, page: pagination.page + 1})}
+                    className="px-4 py-2 bg-[#14151a] rounded-xl border border-white/5 disabled:opacity-50 hover:bg-[#1a1b23] transition"
+                  >Next</button>
+               </div>
+            </div>
+          </div>
+        ) : (
+          /* Grouped View */
+          <div className="space-y-4">
+            {Object.entries(groupedOrders).map(([year, months]) => (
+              <div key={year} className="bg-[#14151a] rounded-2xl border border-white/5 overflow-hidden">
+                <button 
+                  onClick={() => toggleYear(year)}
+                  className="w-full flex items-center justify-between px-6 py-4 bg-[#1a1b23] hover:bg-[#20212b] transition"
+                >
+                  <span className="text-xl font-bold flex items-center gap-2"><FiCalendar className="text-csk-yellow"/> {year}</span>
+                  {expandedYears[year] ? <FiChevronDown /> : <FiChevronRight />}
+                </button>
+                
+                {expandedYears[year] && (
+                  <div className="p-4 space-y-3">
+                    {Object.entries(months).map(([month, days]) => (
+                      <div key={month} className="border border-white/5 rounded-xl overflow-hidden">
+                        <button 
+                          onClick={() => toggleMonth(year, month)}
+                          className="w-full flex items-center justify-between px-5 py-3 bg-[#171821] hover:bg-[#1f202b] transition"
+                        >
+                          <span className="font-semibold">{month}</span>
+                          {expandedMonths[`${year}-${month}`] ? <FiChevronDown /> : <FiChevronRight />}
+                        </button>
+                        
+                        {expandedMonths[`${year}-${month}`] && (
+                          <div className="p-3 space-y-2">
+                             {Object.entries(days).map(([day, dayOrders]) => (
+                               <div key={day} className="border border-white/5 rounded-lg overflow-hidden">
+                                  <button 
+                                    onClick={() => toggleDay(year, month, day)}
+                                    className="w-full flex items-center justify-between px-4 py-2 bg-[#1c1d29] hover:bg-[#252636] transition"
+                                  >
+                                    <span className="text-sm font-medium">Day {day} ({dayOrders.length} orders)</span>
+                                    {expandedDays[`${year}-${month}-${day}`] ? <FiChevronDown /> : <FiChevronRight />}
+                                  </button>
+                                  
+                                  {expandedDays[`${year}-${month}-${day}`] && (
+                                    <div className="p-3 bg-[#0f0f14]/50">
+                                       <div className="space-y-2">
+                                          {dayOrders.map(order => (
+                                            <div key={order._id} className="flex justify-between items-center p-3 bg-white/[0.03] rounded-lg hover:bg-white/[0.05] transition group">
+                                               <div>
+                                                  <div className="text-sm font-bold text-white group-hover:text-csk-yellow transition">{order.orderId}</div>
+                                                  <div className="text-xs text-gray-500">{order.address?.name || order.user?.name} • ₹{order.total.toFixed(2)}</div>
+                                               </div>
+                                               <button 
+                                                 onClick={() => downloadOrderPDF(order._id)}
+                                                 className="p-2 hover:text-csk-yellow transition"
+                                               >
+                                                 <FiDownload />
+                                               </button>
+                                            </div>
+                                          ))}
+                                       </div>
+                                    </div>
+                                  )}
+                               </div>
+                             ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(order.status)}`}>
-                    {order.status.replace('_', ' ').toUpperCase()}
-                  </span>
-                </div>
-
-                <div className="mb-4">
-                  <p className="text-sm text-gray-400">
-                    Payment: {order.paymentMethod.toUpperCase()} - {order.paymentStatus}
-                  </p>
-                  <p className="text-lg font-bold text-csk-yellow">Total: ₹{order.total.toFixed(2)}</p>
-                </div>
-
-                <div className="flex gap-2">
-                  {order.status === 'placed' && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        updateOrderStatus(order._id, 'preparing');
-                      }}
-                      className="flex-1 bg-csk-yellow text-[#0b0b0f] px-4 py-2 rounded-lg hover:bg-csk-yellowSoft transition font-semibold ring-1 ring-csk-yellow/60"
-                    >
-                      Start Preparing
-                    </button>
-                  )}
-                  {order.status === 'preparing' && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        updateOrderStatus(order._id, 'out_for_delivery');
-                      }}
-                      className="flex-1 bg-csk-yellow text-[#0b0b0f] px-4 py-2 rounded-lg hover:bg-csk-yellowSoft transition font-semibold ring-1 ring-csk-yellow/60"
-                    >
-                      Out for Delivery
-                    </button>
-                  )}
-                  {order.status === 'out_for_delivery' && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        updateOrderStatus(order._id, 'delivered');
-                      }}
-                      className="flex-1 bg-csk-yellow text-[#0b0b0f] px-4 py-2 rounded-lg hover:bg-csk-yellowSoft transition font-semibold ring-1 ring-csk-yellow/60"
-                    >
-                      Mark Delivered
-                    </button>
-                  )}
-                </div>
+                )}
               </div>
             ))}
           </div>
-
-          {selectedOrder && (
-            <div className="bg-[#14151a] rounded-2xl shadow-soft ring-1 ring-white/10 p-6">
-              <h2 className="text-xl font-bold text-csk-yellow mb-4">Order Details</h2>
-              
-              <div className="mb-4">
-                <h3 className="font-semibold mb-2 text-white">Customer Info</h3>
-                <p className="text-sm text-gray-400">Name: {selectedOrder.user?.name}</p>
-                <p className="text-sm text-gray-400">Email: {selectedOrder.user?.email}</p>
-                <p className="text-sm text-gray-400">Mobile: {selectedOrder.user?.mobile}</p>
-              </div>
-
-              <div className="mb-4">
-                <h3 className="font-semibold mb-2 text-white">Items</h3>
-                {selectedOrder.items.map((item, index) => (
-                  <div key={index} className="flex justify-between mb-2">
-                    <span className="text-gray-200">{item.name} x {item.quantity}</span>
-                    <span className="text-csk-yellow">₹{item.price * item.quantity}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mb-4">
-                <h3 className="font-semibold mb-2 text-white">Delivery Address</h3>
-                <p className="text-sm text-gray-400">
-                  {selectedOrder.address.fullAddress}, {selectedOrder.address.area}, {selectedOrder.address.city} - {selectedOrder.address.pincode}
-                </p>
-                <p className="text-sm text-gray-400">Mobile: {selectedOrder.address.mobile}</p>
-              </div>
-
-              <div className="mb-4">
-                <h3 className="font-semibold mb-2 text-white">Update Status</h3>
-                <select
-                  value={selectedOrder.status}
-                  onChange={(e) => updateOrderStatus(selectedOrder._id, e.target.value)}
-                  className="w-full px-4 py-3 border border-white/10 rounded-lg bg-[#0f0f14] text-white focus:ring-2 focus:ring-csk-yellow/70 focus:border-transparent"
-                >
-                  <option value="placed">Placed</option>
-                  <option value="preparing">Preparing</option>
-                  <option value="out_for_delivery">Out for Delivery</option>
-                  <option value="delivered">Delivered</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-              </div>
-
-              {!selectedOrder.deliveryPartner && selectedOrder.status === 'preparing' && (
-                <div className="mb-4">
-                  <h3 className="font-semibold mb-2 text-white">Assign Delivery Partner</h3>
-                  <select
-                    onChange={(e) => assignDeliveryPartner(selectedOrder._id, e.target.value)}
-                    className="w-full px-4 py-3 border border-white/10 rounded-lg bg-[#0f0f14] text-white focus:ring-2 focus:ring-csk-yellow/70 focus:border-transparent"
-                  >
-                    <option value="">Select Delivery Partner</option>
-                    {deliveryPartners.map((partner) => (
-                      <option key={partner._id} value={partner._id}>
-                        {partner.name} - {partner.phone}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {selectedOrder.deliveryPartner && (
-                <div className="mb-4">
-                  <h3 className="font-semibold mb-2 text-white">Delivery Partner</h3>
-                  <p className="text-sm text-gray-400">Name: {selectedOrder.deliveryPartner.name}</p>
-                  <p className="text-sm text-gray-400">Phone: {selectedOrder.deliveryPartner.phone}</p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );
 };
 
 export default AdminOrders;
+
 

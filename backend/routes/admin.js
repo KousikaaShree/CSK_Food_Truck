@@ -8,6 +8,12 @@ const Delivery = require('../models/Delivery');
 const { upload, uploadToCloudinary } = require('../utils/cloudinary');
 const fs = require('fs');
 const path = require('path');
+const { 
+  generateOrderPDFBuffer, 
+  generateBulkOrdersPDFBuffer, 
+  generateCustomerReportPDFBuffer 
+} = require('../utils/pdfGenerator');
+const moment = require('moment-timezone');
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(__dirname, '../uploads');
@@ -175,18 +181,169 @@ router.get('/foods', verifyToken, requireAdmin, async (req, res) => {
 
 // ========== ORDER MANAGEMENT ==========
 
-// Get all orders
+// Get all orders (with filters and pagination)
 router.get('/orders', verifyToken, requireAdmin, async (req, res) => {
   try {
-    const orders = await Order.find()
+    const { 
+      page = 1, 
+      limit = 10, 
+      orderId, 
+      customerName, 
+      email, 
+      fromDate, 
+      toDate, 
+      sortBy = 'createdAt', 
+      sortOrder = 'desc' 
+    } = req.query;
+
+    const query = {};
+
+    if (orderId) query.orderId = { $regex: orderId, $options: 'i' };
+    if (customerName) {
+      query.$or = [
+        { 'address.name': { $regex: customerName, $options: 'i' } },
+        { 'user.name': { $regex: customerName, $options: 'i' } }
+      ];
+    }
+    if (email) {
+      query.$or = [
+        { 'address.email': { $regex: email, $options: 'i' } },
+        { 'user.email': { $regex: email, $options: 'i' } }
+      ];
+    }
+
+    if (fromDate || toDate) {
+      query.createdAt = {};
+      if (fromDate) query.createdAt.$gte = new Date(fromDate);
+      if (toDate) {
+        const end = new Date(toDate);
+        end.setHours(23, 59, 59, 999);
+        query.createdAt.$lte = end;
+      }
+    }
+
+    const sortOptions = {};
+    sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    const orders = await Order.find(query)
       .populate('user', 'name email mobile')
       .populate('items.food', 'name image')
       .populate('deliveryPartner', 'name phone')
-      .sort({ createdAt: -1 });
+      .sort(sortOptions)
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
 
-    res.json(orders);
+    const total = await Order.countDocuments(query);
+
+    res.json({
+      orders,
+      totalPages: Math.ceil(total / limit),
+      currentPage: Number(page),
+      totalOrders: total
+    });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Get grouped orders (Year -> Month -> Day)
+router.get('/orders/grouped', verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const grouped = await Order.aggregate([
+      {
+        $project: {
+          year: { $year: { date: '$createdAt', timezone: 'Asia/Kolkata' } },
+          month: { $month: { date: '$createdAt', timezone: 'Asia/Kolkata' } },
+          day: { $dayOfMonth: { date: '$createdAt', timezone: 'Asia/Kolkata' } },
+          order: '$$ROOT'
+        }
+      },
+      {
+        $group: {
+          _id: { year: '$year', month: '$month', day: '$day' },
+          orders: { $push: '$order' }
+        }
+      },
+      {
+        $sort: { '_id.year': -1, '_id.month': -1, '_id.day': -1 }
+      }
+    ]);
+
+    // Reshape for frontend Year -> Month -> Day
+    const result = {};
+    grouped.forEach(item => {
+      const { year, month, day } = item._id;
+      if (!result[year]) result[year] = {};
+      
+      const monthName = moment().month(month - 1).format('MMMM');
+      if (!result[year][monthName]) result[year][monthName] = {};
+      
+      result[year][monthName][day] = item.orders;
+    });
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Download Single Order PDF
+router.get('/orders/:id/pdf', verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id)
+      .populate('user', 'name email mobile')
+      .populate('items.food', 'name');
+
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+
+    const pdfBuffer = await generateOrderPDFBuffer(order);
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=Order_${order.orderId}.pdf`);
+    res.end(pdfBuffer, 'binary');
+  } catch (error) {
+    console.error('PDF Order Error:', error);
+    res.status(500).json({ message: 'Server error generating PDF', error: error.message });
+  }
+});
+
+// Download Bulk Orders PDF (based on current filters)
+router.get('/orders/export/pdf', verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const { orderId, customerName, email, fromDate, toDate } = req.query;
+    const query = {};
+    if (orderId) query.orderId = { $regex: orderId, $options: 'i' };
+    if (customerName) {
+      query.$or = [
+        { 'address.name': { $regex: customerName, $options: 'i' } },
+        { 'user.name': { $regex: customerName, $options: 'i' } }
+      ];
+    }
+    if (email) {
+      query.$or = [
+        { 'address.email': { $regex: email, $options: 'i' } },
+        { 'user.email': { $regex: email, $options: 'i' } }
+      ];
+    }
+    if (fromDate || toDate) {
+      query.createdAt = {};
+      if (fromDate) query.createdAt.$gte = new Date(fromDate);
+      if (toDate) {
+         const end = new Date(toDate);
+         end.setHours(23, 59, 59, 999);
+         query.createdAt.$lte = end;
+      }
+    }
+
+    const orders = await Order.find(query).sort({ createdAt: -1 });
+    const pdfBuffer = await generateBulkOrdersPDFBuffer(orders, `Orders Report (${orders.length} orders)`);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=Orders_Report.pdf');
+    res.end(pdfBuffer, 'binary');
+  } catch (error) {
+    console.error('PDF Bulk Error:', error);
+    res.status(500).json({ message: 'Server error generating bulk PDF', error: error.message });
   }
 });
 
@@ -322,6 +479,7 @@ router.put('/delivery/:id/location', verifyToken, requireAdmin, async (req, res)
 // Customer orders summary (customers + number of orders)
 router.get('/customer-orders', verifyToken, requireAdmin, async (req, res) => {
   try {
+    const { exportPdf } = req.query;
     const rows = await Order.aggregate([
       { $group: { _id: '$user', order_count: { $sum: 1 } } },
       {
@@ -345,9 +503,17 @@ router.get('/customer-orders', verifyToken, requireAdmin, async (req, res) => {
       { $sort: { order_count: -1, name: 1 } }
     ]);
 
+    if (exportPdf === 'true') {
+      const pdfBuffer = await generateCustomerReportPDFBuffer(rows);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename=Customer_Orders_Report.pdf');
+      return res.end(pdfBuffer, 'binary');
+    }
+
     res.json(rows);
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('PDF Customer Report Error:', error);
+    res.status(500).json({ message: 'Server error generating report', error: error.message });
   }
 });
 
