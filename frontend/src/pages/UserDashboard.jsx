@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { FiEdit2, FiHeart, FiMapPin, FiPackage, FiTrash2 } from 'react-icons/fi';
+import { FiEdit2, FiHeart, FiMapPin, FiPackage, FiTrash2, FiShoppingCart } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useMenu } from '../context/MenuContext';
@@ -10,7 +10,7 @@ import API_URL from '../config';
 
 const UserDashboard = () => {
   const { user: authUser } = useAuth();
-  const { addToCart } = useCart();
+  const { addToCart, getCartItemCount } = useCart();
   const { items: menuItems } = useMenu();
   const navigate = useNavigate();
 
@@ -242,6 +242,21 @@ const UserDashboard = () => {
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition ${activeSection === 'orders' ? 'bg-csk-yellow text-[#0b0b0f]' : 'text-gray-200 hover:bg-white/5'}`}
             >
               <FiPackage /> My Orders
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/checkout')}
+              className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-gray-200 hover:bg-white/5 transition"
+            >
+              <div className="flex items-center gap-3">
+                <FiShoppingCart className="text-csk-yellow" /> Checkout
+              </div>
+              {/* Badge for cart count */}
+              {getCartItemCount() > 0 && (
+                <span className="bg-csk-yellow text-[#0b0b0f] text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                  {getCartItemCount()}
+                </span>
+              )}
             </button>
             <button
               type="button"

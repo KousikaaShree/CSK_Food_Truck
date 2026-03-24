@@ -41,6 +41,7 @@ app.use('/api/user', require('./routes/user'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/payment', require('./routes/payment'));
 app.use('/api/delivery', require('./routes/delivery'));
+app.use('/api/contact', require('./routes/contact'));
 
 
 // Serve frontend in production

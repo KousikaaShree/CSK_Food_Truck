@@ -151,4 +151,67 @@ const sendOrderConfirmationEmail = async (order) => {
   }
 };
 
-module.exports = { sendOrderConfirmationEmail };
+const sendFeedbackEmail = async (name, email, message) => {
+  try {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      console.warn('EMAIL_USER or EMAIL_PASS not set in environment. Skipping feedback email.');
+      return false;
+    }
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    const adminEmails = ['csktrucktheni@gmail.com', 'kousikaashree.6607@gmail.com'];
+
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f4f4f4; padding: 20px;">
+        <div style="background-color: #0b0b0e; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+          <h1 style="color: #FACC15; margin: 0;">CSK Food Truck</h1>
+          <p style="color: #aaa; margin: 5px 0 0 0;">New User Feedback Received</p>
+        </div>
+        
+        <div style="background-color: #ffffff; padding: 30px; border-radius: 0 0 8px 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+          <h2 style="color: #333; border-bottom: 2px solid #FACC15; padding-bottom: 10px;">Feedback Details</h2>
+          
+          <p style="color: #555; font-size: 16px;"><strong>Name:</strong> ${name}</p>
+          <p style="color: #555; font-size: 16px;"><strong>Email:</strong> ${email}</p>
+          
+          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 6px; margin: 25px 0; border-left: 4px solid #FACC15;">
+            <p style="margin: 0; color: #333; font-style: italic; line-height: 1.6;">"${message}"</p>
+          </div>
+          
+          <p style="text-align: center; color: #777; font-size: 12px; margin-top: 30px;">
+            This email was sent from the CSK Food Truck Contact Form.
+          </p>
+        </div>
+      </div>
+    `;
+
+    const mailOptions = {
+      from: `"CSK Food Truck Website" <${process.env.EMAIL_USER}>`,
+      to: adminEmails.join(', '),
+      subject: `New Feedback from ${name}`,
+      html: htmlContent
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`Feedback email sent successfully. Message ID: ${info.messageId}`);
+    return true;
+
+  } catch (error) {
+    console.error('node-mailer Error details:', {
+      message: error.message,
+      code: error.code,
+      command: error.command,
+      response: error.response
+    });
+    return false;
+  }
+};
+
+module.exports = { sendOrderConfirmationEmail, sendFeedbackEmail };

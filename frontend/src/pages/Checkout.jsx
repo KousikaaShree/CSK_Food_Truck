@@ -21,6 +21,11 @@ const Checkout = () => {
   const [distance, setDistance] = useState('');
   const [calculatingDelivery, setCalculatingDelivery] = useState(false);
   const [isDeliverable, setIsDeliverable] = useState(true);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('razorpay');
+  const [isWithinOrderWindow, setIsWithinOrderWindow] = useState(true);
+  const [currentISTTime, setCurrentISTTime] = useState('');
 
   const subtotal = cart?.total || 0;
   const tax = subtotal * 0.18;
