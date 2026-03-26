@@ -60,18 +60,18 @@ const AdminDashboard = () => {
             </div>
           </Link>
 
-          <div className="flex items-center gap-4 text-sm font-medium text-gray-100/85">
-            <Link to="/admin/menu" className="hover:text-csk-yellow flex items-center gap-1">
-              <FiMenu /> <span>Menu</span>
+          <div className="flex flex-wrap items-center gap-3 md:gap-4 text-sm font-medium text-gray-100/85">
+            <Link to="/admin/menu" className="hover:text-csk-yellow flex items-center gap-1 transition">
+              <FiMenu /> <span className="hidden xs:inline">Menu</span>
             </Link>
-            <Link to="/admin/orders" className="hover:text-csk-yellow flex items-center gap-1">
-              <FiShoppingBag /> <span>Orders</span>
+            <Link to="/admin/orders" className="hover:text-csk-yellow flex items-center gap-1 transition">
+              <FiShoppingBag /> <span className="hidden xs:inline">Orders</span>
             </Link>
             <button
               onClick={handleLogout}
-              className="inline-flex items-center gap-1 rounded-full px-4 py-2 bg-csk-yellow text-[#0b0b0f] hover:bg-csk-yellowSoft transition shadow-soft ring-1 ring-csk-yellow/60"
+              className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 md:px-4 md:py-2 bg-csk-yellow text-[#0b0b0f] hover:bg-csk-yellowSoft transition shadow-soft ring-1 ring-csk-yellow/60 text-xs md:text-sm"
             >
-              <FiLogOut /> Logout
+              <FiLogOut /> <span className="hidden xs:inline">Logout</span><span className="xs:hidden">Out</span>
             </button>
           </div>
         </div>
@@ -173,8 +173,8 @@ const AdminDashboard = () => {
           {customerOrders.length === 0 ? (
             <div className="text-sm text-gray-300">No customers have placed orders yet.</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
+            <div className="overflow-x-auto -mx-2 px-2">
+              <table className="w-full text-left text-sm min-w-[500px]">
                 <thead>
                   <tr className="text-gray-300 border-b border-white/10">
                     <th className="py-3 pr-4 font-semibold">Customer Name</th>

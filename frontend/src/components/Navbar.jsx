@@ -167,12 +167,12 @@ const Navbar = () => {
                 )}
 
                 {user ? (
-                  <button onClick={handleLogout} className="inline-flex items-center gap-2 text-sm font-medium text-csk-charcoal/80 hover:text-csk-charcoal">
+                  <button onClick={handleLogout} className="inline-flex items-center gap-2 text-sm font-medium text-white/90 hover:text-white transition">
                     <FiLogOut /> Logout
                   </button>
                 ) : (
-                  <div className="flex items-center gap-2">
-                    <NavLink to="/login" className="text-sm font-medium text-csk-charcoal/80 hover:text-csk-charcoal" onClick={() => setMobileOpen(false)}>
+                  <div className="flex items-center gap-3 mt-2">
+                    <NavLink to="/login" className="text-sm font-medium text-white/90 hover:text-white transition" onClick={() => setMobileOpen(false)}>
                       Login
                     </NavLink>
                     <NavLink

@@ -139,11 +139,11 @@ const AdminOrders = () => {
   return (
     <div className="min-h-screen bg-[#0b0b0e] text-white">
       <nav className="border-b border-white/5 bg-[#0d0d10]/95 backdrop-blur sticky top-0 z-30">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <Link to="/admin/dashboard" className="text-2xl font-bold bg-gradient-to-r from-csk-yellow to-yellow-500 bg-clip-text text-transparent">
+        <div className="container mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-4">
+          <Link to="/admin/dashboard" className="text-xl md:text-2xl font-bold bg-gradient-to-r from-csk-yellow to-yellow-500 bg-clip-text text-transparent">
             Admin Panel
           </Link>
-          <Link to="/admin/dashboard" className="text-gray-400 hover:text-white transition">Back to Dashboard</Link>
+          <Link to="/admin/dashboard" className="text-sm text-gray-400 hover:text-white transition">Back to Dashboard</Link>
         </div>
       </nav>
 
@@ -203,8 +203,8 @@ const AdminOrders = () => {
           </div>
         ) : viewMode === 'list' ? (
           <div className="space-y-4">
-            <div className="bg-[#14151a] rounded-2xl border border-white/5 overflow-hidden">
-               <table className="w-full text-left">
+            <div className="bg-[#14151a] rounded-2xl border border-white/5 overflow-x-auto">
+               <table className="w-full text-left min-w-[700px]">
                   <thead className="bg-[#1a1b23] text-gray-400 text-xs uppercase">
                     <tr>
                        <th className="px-6 py-4">Order ID</th>

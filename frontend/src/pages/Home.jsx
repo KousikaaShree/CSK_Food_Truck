@@ -296,16 +296,16 @@ const Home = () => {
       </section>
 
       {/* Discover Our Story Section */}
-      <section style={{ backgroundColor: '#000', padding: '80px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '40px', flexWrap: 'wrap', maxWidth: '1200px', padding: '40px', backgroundColor: '#FFD700', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-          <div style={{ flex: '1', minWidth: '300px', maxWidth: '500px' }}>
+      <section className="bg-black py-12 md:py-20 px-4 md:px-5 flex items-center justify-center">
+        <div className="flex flex-col md:flex-row items-center gap-8 md:gap-10 max-w-7xl p-6 md:p-10 bg-[#FFD700] rounded-xl shadow-lg w-full">
+          <div className="flex-1 w-full max-w-[500px]">
             <img
               src="https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800"
               alt="Delicious Food"
-              style={{ width: '100%', height: 'auto', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+              className="w-full h-auto rounded-lg shadow-md"
             />
           </div>
-          <div style={{ flex: '1', minWidth: '300px', maxWidth: '500px', textAlign: 'left' }}>
+          <div className="flex-1 w-full max-w-[500px] text-left">
             <p style={{ color: '#333', fontStyle: 'italic', marginBottom: '10px', fontSize: '16px' }}>Discover</p>
             <h2 style={{ fontSize: '36px', marginBottom: '20px', color: '#333', fontWeight: '600' }}>Our Story</h2>
             <p style={{ fontSize: '16px', lineHeight: '1.6', color: '#333', marginBottom: '20px' }}>

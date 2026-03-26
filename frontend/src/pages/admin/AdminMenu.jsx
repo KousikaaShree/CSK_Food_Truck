@@ -158,9 +158,9 @@ const AdminMenu = () => {
           </Link>
           <Link
             to="/admin/dashboard"
-            className="text-sm font-medium text-gray-100/85 hover:text-csk-yellow transition"
+            className="text-xs md:text-sm font-medium text-gray-100/85 hover:text-csk-yellow transition"
           >
-            Back to Dashboard
+            Dashboard
           </Link>
         </div>
       </nav>
