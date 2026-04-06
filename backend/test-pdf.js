@@ -8,7 +8,6 @@ const mockOrder = {
   paymentStatus: 'pending',
   status: 'placed',
   subtotal: 1000,
-  tax: 180,
   deliveryFee: 50,
   total: 1230,
   address: {

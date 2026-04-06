@@ -85,17 +85,12 @@ const generateOrderPDFBuffer = (order) => {
       currentY += 10;
 
       // --- Calculations ---
-      const subtotal = Number(order.subtotal) || 0;
-      const tax = Number(order.tax) || 0;
       const deliveryFee = Number(order.deliveryFee) || 0;
       const total = Number(order.total) || 0;
+      const subtotal = Number(order.subtotal) || 0;
 
-      doc.text('Subtotal:', 350, currentY);
+      doc.text('Item Total:', 350, currentY);
       doc.text(`Rs. ${subtotal.toFixed(2)}`, 450, currentY);
-      currentY += 15;
-      
-      doc.text('GST (18%):', 350, currentY);
-      doc.text(`Rs. ${tax.toFixed(2)}`, 450, currentY);
       currentY += 15;
 
       doc.text('Delivery Fee:', 350, currentY);

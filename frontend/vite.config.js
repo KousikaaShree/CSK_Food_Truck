@@ -7,7 +7,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://51.21.246.120',
+        target: 'http://cskfoodtruck.nandeesh.fun',
         changeOrigin: true
       }
     }

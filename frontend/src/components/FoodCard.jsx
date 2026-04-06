@@ -7,6 +7,8 @@ const FoodCard = ({
   price,
   tags = [],
   onCustomize,
+  hasCustomization = true,
+  onAddToCart,
   available = true,
   liked = false,
   onToggleLike
@@ -132,7 +134,7 @@ const FoodCard = ({
 
                 <button
                   type="button"
-                  onClick={isAvailable ? onCustomize : undefined}
+                  onClick={isAvailable ? (hasCustomization ? onCustomize : onAddToCart) : undefined}
                   disabled={!isAvailable}
                   className={[
                     'w-full py-2.5 rounded-full transition flex items-center justify-center gap-2 shadow-soft text-sm font-bold',
@@ -143,7 +145,7 @@ const FoodCard = ({
                 >
                   {isAvailable ? (
                     <>
-                      Add to cart <FiSettings className="w-4 h-4" />
+                      {hasCustomization ? 'Customize ' : 'Add to cart '} <FiSettings className="w-4 h-4" />
                     </>
                   ) : (
                     'Unavailable'

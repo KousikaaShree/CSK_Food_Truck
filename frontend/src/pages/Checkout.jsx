@@ -5,6 +5,37 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import API_URL from '../config';
 
+const SHOP_LAT = Number(import.meta.env.VITE_SHOP_LAT) || 10.0104;
+const SHOP_LNG = Number(import.meta.env.VITE_SHOP_LNG) || 77.4768;
+
+// Distance between two lat/lng pairs using the Haversine formula.
+// Returns distance in kilometers.
+function haversineDistanceKm(lat1, lon1, lat2, lon2) {
+  const φ1 = Number(lat1) * (Math.PI / 180);
+  const φ2 = Number(lat2) * (Math.PI / 180);
+  const Δφ = (Number(lat2) - Number(lat1)) * (Math.PI / 180);
+  const Δλ = (Number(lon2) - Number(lon1)) * (Math.PI / 180);
+
+  if (![φ1, φ2, Δφ, Δλ].every(Number.isFinite)) return NaN;
+
+  const a =
+    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+    Math.cos(φ1) * Math.cos(φ2) *
+      Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  const R = 6371; // km
+  return R * c;
+}
+
+function getDeliveryChargeForDistanceKm(distanceKm) {
+  const km = Number(distanceKm);
+  if (!Number.isFinite(km) || km < 0) return { allowed: false, deliveryCharge: 0 };
+  if (km <= 10) return { allowed: true, deliveryCharge: 30 };
+  if (km <= 15) return { allowed: true, deliveryCharge: 50 };
+  return { allowed: false, deliveryCharge: 0 };
+}
+
 
 const Checkout = () => {
   const { cart, clearCart } = useCart();
@@ -19,8 +50,11 @@ const Checkout = () => {
   });
   const [deliveryFee, setDeliveryFee] = useState(0);
   const [distance, setDistance] = useState('');
-  const [calculatingDelivery, setCalculatingDelivery] = useState(false);
+  const [distanceValue, setDistanceValue] = useState(null);
+  const [customerLocation, setCustomerLocation] = useState(null); // { latitude, longitude }
+  const [deliveryReady, setDeliveryReady] = useState(false);
   const [isDeliverable, setIsDeliverable] = useState(true);
+  const [geoStatus, setGeoStatus] = useState('idle'); // idle | loading | granted | denied | error
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('razorpay');
@@ -28,8 +62,7 @@ const Checkout = () => {
   const [currentISTTime, setCurrentISTTime] = useState('');
 
   const subtotal = cart?.total || 0;
-  const tax = subtotal * 0.18;
-  const total = subtotal + tax + deliveryFee;
+  const total = subtotal + deliveryFee;
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -75,6 +108,83 @@ const Checkout = () => {
     // Refresh every 30 seconds so the button/message updates automatically
     const intervalId = setInterval(updateWindowState, 30000);
     return () => clearInterval(intervalId);
+  }, []);
+
+  // Detect user location for delivery distance (Haversine).
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setGeoStatus('error');
+      setDeliveryReady(false);
+      setIsDeliverable(false);
+      setError('Location is not supported by your browser. Please verify delivery manually.');
+      return;
+    }
+
+    setGeoStatus('loading');
+
+    let cancelled = false;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        if (cancelled) return;
+
+        const lat = pos?.coords?.latitude;
+        const lng = pos?.coords?.longitude;
+
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+          setGeoStatus('error');
+          setDeliveryReady(false);
+          setIsDeliverable(false);
+          setCustomerLocation(null);
+          setDeliveryFee(0);
+          setDistance('');
+          setDistanceValue(null);
+          setError('Invalid coordinates received. Please try again.');
+          return;
+        }
+
+        const distanceKm = haversineDistanceKm(lat, lng, SHOP_LAT, SHOP_LNG);
+        const { allowed, deliveryCharge } = getDeliveryChargeForDistanceKm(distanceKm);
+
+        setCustomerLocation({ latitude: lat, longitude: lng });
+        setDistance(`${distanceKm.toFixed(1)} km`);
+        setDeliveryFee(deliveryCharge);
+        setDistanceValue(Math.round(distanceKm * 1000)); // meters (for backward compatibility)
+        setIsDeliverable(allowed);
+        setDeliveryReady(true);
+        setGeoStatus('granted');
+
+        if (!allowed) {
+          setError('Sorry, delivery is not available in your area');
+        } else {
+          setError('');
+        }
+      },
+      (err) => {
+        if (cancelled) return;
+        const code = err?.code;
+
+        setGeoStatus(code === 1 ? 'denied' : 'error');
+        setDeliveryReady(false);
+        setCustomerLocation(null);
+        setDeliveryFee(0);
+        setDistance('');
+        setDistanceValue(null);
+        setIsDeliverable(false);
+
+        if (code === 1) {
+          setError('Location permission denied. Please enable location to calculate delivery distance.');
+        } else if (code === 2) {
+          setError('Location unavailable. Please try again.');
+        } else {
+          setError('Location request timed out. Please try again.');
+        }
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Sync frontend cart to backend before placing order
@@ -143,36 +253,6 @@ const Checkout = () => {
       console.error('Error syncing cart to backend:', error);
       // Don't throw - we'll use frontend cart items as fallback
       console.log('Will use frontend cart items for order creation');
-    }
-  };
-
-  const handleCalculateDelivery = async () => {
-    if (!formData.fullAddress || !formData.city) {
-      setError('Please enter full address and city first');
-      return;
-    }
-
-    setCalculatingDelivery(true);
-    setError('');
-    try {
-      const res = await axios.post(
-        `${API_URL}/api/delivery/calculate`,
-        { address: formData },
-        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
-      );
-
-      setDistance(res.data.distance);
-      setDeliveryFee(res.data.deliveryFee);
-      setIsDeliverable(res.data.available);
-      
-      if (!res.data.available) {
-        setError('Delivery not available for this location (over 15km).');
-      }
-    } catch (err) {
-      console.error('Delivery calculation error:', err);
-      setError(err.response?.data?.message || 'Could not calculate delivery fee. Please try again.');
-    } finally {
-      setCalculatingDelivery(false);
     }
   };
 
@@ -281,7 +361,8 @@ const Checkout = () => {
         razorpayPaymentId,
         razorpaySignature,
         cartItems: cartItemsForBackend, // Send cart items as fallback
-        deliveryFee: deliveryFee
+        customerLocation,
+        distanceValue
       };
 
       const res = await axios.post(
@@ -312,13 +393,13 @@ const Checkout = () => {
       return;
     }
 
-    if (!isDeliverable) {
-      setError('Delivery is not available for your location.');
+    if (!deliveryReady) {
+      setError('Please enable location to calculate delivery before placing your order.');
       return;
     }
 
-    if (deliveryFee === 0 && !distance && formData.fullAddress) {
-      setError('Please click "Check Delivery" before placing your order.');
+    if (!isDeliverable) {
+      setError('Sorry, delivery is not available in your area');
       return;
     }
 
@@ -431,14 +512,7 @@ const Checkout = () => {
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={handleCalculateDelivery}
-                disabled={calculatingDelivery || !formData.fullAddress}
-                className="w-full bg-white/5 text-csk-yellow py-2 rounded-lg border border-csk-yellow/30 hover:bg-csk-yellow/10 transition text-sm font-medium disabled:opacity-50"
-              >
-                {calculatingDelivery ? 'Calculating Distance...' : 'Verify Delivery & Calculate Fee'}
-              </button>
+              {/* Delivery is calculated automatically via Geolocation + Haversine on page load. */}
 
               {distance && isDeliverable && (
                 <div className="bg-csk-yellow/10 border border-csk-yellow/30 text-csk-yellow px-4 py-2 rounded text-sm flex justify-between items-center animate-pulse-subtle">
@@ -480,7 +554,9 @@ const Checkout = () => {
                   !cart ||
                   !Array.isArray(cart.items) ||
                   cart.items.length === 0 ||
-                  !isWithinOrderWindow
+                  !isWithinOrderWindow ||
+                  !deliveryReady ||
+                  !isDeliverable
                 }
                 className="w-full bg-csk-yellow text-[#0b0b0f] py-3 rounded-lg hover:bg-csk-yellowSoft transition disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-soft ring-1 ring-csk-yellow/60"
               >
@@ -526,13 +602,9 @@ const Checkout = () => {
                   ))}
                 </div>
                 <div className="space-y-2 mb-4">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Subtotal</span>
-                    <span className="font-semibold text-gray-100">₹{subtotal.toFixed(2)}</span>
-                  </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">Tax (18% GST)</span>
-                    <span className="font-semibold text-gray-100">₹{tax.toFixed(2)}</span>
+                    <span className="text-gray-400">Item Total</span>
+                    <span className="font-semibold text-gray-100">₹{subtotal.toFixed(2)}</span>
                   </div>
                   {deliveryFee > 0 && (
                     <div className="flex justify-between text-sm">
@@ -541,7 +613,7 @@ const Checkout = () => {
                     </div>
                   )}
                   <div className="flex justify-between text-xl font-bold pt-4 border-t border-white/10">
-                    <span>Total</span>
+                    <span>Final Total</span>
                     <span className="text-csk-yellow">₹{total.toFixed(2)}</span>
                   </div>
                 </div>

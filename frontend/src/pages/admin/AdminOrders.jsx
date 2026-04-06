@@ -15,7 +15,8 @@ const AdminOrders = () => {
     customerName: '',
     email: '',
     fromDate: '',
-    toDate: ''
+    toDate: '',
+    status: ''
   });
   const [pagination, setPagination] = useState({
     page: 1,
@@ -34,12 +35,22 @@ const AdminOrders = () => {
     }
   }, [viewMode, pagination.page, filters]);
 
+  const getCleanFilters = () => {
+    const clean = {};
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value && value.toString().trim() !== '') {
+        clean[key] = value.trim();
+      }
+    });
+    return clean;
+  };
+
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const { orderId, customerName, email, fromDate, toDate } = filters;
+      const cleanFilters = getCleanFilters();
       const res = await axios.get(`${API_URL}/api/admin/orders`, {
-        params: { page: pagination.page, orderId, customerName, email, fromDate, toDate },
+        params: { page: pagination.page, ...cleanFilters },
         headers: { Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}` }
       });
       setOrders(res.data.orders);
@@ -74,6 +85,22 @@ const AdminOrders = () => {
     setPagination({ ...pagination, page: 1 });
   };
 
+  const updateOrderStatus = async (orderId, newStatus) => {
+    try {
+      await axios.put(`${API_URL}/api/admin/orders/${orderId}/status`, { status: newStatus }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}` }
+      });
+      if (viewMode === 'list') {
+        fetchOrders();
+      } else {
+        fetchGroupedOrders();
+      }
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      alert('Failed to update order status');
+    }
+  };
+
   const downloadOrderPDF = async (orderId) => {
     try {
       const res = await axios.get(`${API_URL}/api/admin/orders/${orderId}/pdf`, {
@@ -105,9 +132,9 @@ const AdminOrders = () => {
 
   const downloadBulkPDF = async () => {
     try {
-      const { orderId, customerName, email, fromDate, toDate } = filters;
+      const cleanFilters = getCleanFilters();
       const res = await axios.get(`${API_URL}/api/admin/orders/export/pdf`, {
-        params: { orderId, customerName, email, fromDate, toDate },
+        params: cleanFilters,
         headers: { Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}` },
         responseType: 'blob'
       });
@@ -159,12 +186,6 @@ const AdminOrders = () => {
             >
               <FiCalendar /> {viewMode === 'list' ? 'Grouped View' : 'List View'}
             </button>
-            <button 
-              onClick={downloadBulkPDF}
-              className="px-4 py-2 bg-csk-yellow text-[#0b0b0f] rounded-xl hover:bg-yellow-500 transition text-sm font-bold flex items-center gap-2"
-            >
-              <FiDownload /> Export PDF
-            </button>
           </div>
         </div>
 
@@ -173,7 +194,7 @@ const AdminOrders = () => {
           <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
             <FiFilter /> Filters
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
             <div className="space-y-1">
               <label className="text-xs text-gray-500 ml-1">Order ID</label>
               <input name="orderId" placeholder="Search ID..." value={filters.orderId} onChange={handleFilterChange} className="w-full bg-[#0f0f14] border border-white/10 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-csk-yellow/50 outline-none" />
@@ -193,6 +214,17 @@ const AdminOrders = () => {
             <div className="space-y-1">
               <label className="text-xs text-gray-500 ml-1">To Date</label>
               <input type="date" name="toDate" value={filters.toDate} onChange={handleFilterChange} className="w-full bg-[#0f0f14] border border-white/10 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-csk-yellow/50 outline-none" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 ml-1">Status</label>
+              <select name="status" value={filters.status} onChange={handleFilterChange} className="w-full bg-[#0f0f14] border border-white/10 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-csk-yellow/50 outline-none text-gray-300">
+                <option value="">All Statuses</option>
+                <option value="placed">Placed</option>
+                <option value="preparing">Preparing</option>
+                <option value="out_for_delivery">Out for Delivery</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
             </div>
           </div>
         </div>
@@ -225,13 +257,21 @@ const AdminOrders = () => {
                         </td>
                         <td className="px-6 py-4 font-bold text-sm">₹{order.total.toFixed(2)}</td>
                         <td className="px-6 py-4">
-                           <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase ${
-                             order.status === 'delivered' ? 'bg-green-500/10 text-green-500' :
-                             order.status === 'cancelled' ? 'bg-red-500/10 text-red-500' :
-                             'bg-csk-yellow/10 text-csk-yellow'
-                           }`}>
-                             {order.status}
-                           </span>
+                           <select 
+                             value={order.status}
+                             onChange={(e) => updateOrderStatus(order._id, e.target.value)}
+                             className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase cursor-pointer outline-none bg-[#14151a] border border-white/10 ${
+                               order.status === 'delivered' ? 'text-green-500' :
+                               order.status === 'cancelled' ? 'text-red-500' :
+                               'text-csk-yellow'
+                             }`}
+                           >
+                             <option value="placed">Placed</option>
+                             <option value="preparing">Preparing</option>
+                             <option value="out_for_delivery">Out for Delivery</option>
+                             <option value="delivered">Delivered</option>
+                             <option value="cancelled">Cancelled</option>
+                           </select>
                         </td>
                         <td className="px-6 py-4 text-xs text-gray-400">{moment(order.createdAt).format('DD MMM YYYY, hh:mm A')}</td>
                         <td className="px-6 py-4">

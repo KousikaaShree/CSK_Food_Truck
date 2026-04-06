@@ -6,6 +6,7 @@ import CustomizeModal from '../components/CustomizeModal';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useMenu, ADMIN_CATEGORIES } from '../context/MenuContext';
+import { getCustomizationsForCategory } from '../utils/customizations';
 import axios from 'axios';
 import API_URL from '../config';
 
@@ -109,14 +110,15 @@ const Menu = () => {
       }
 
       // 3. Tag filters
-      // If Bestseller is ON, item must have 'bestseller' tag
-      if (filters.bestseller && !item.tags?.includes('bestseller')) return false;
+      // 3. Filters
+      if (filters.bestseller && !item.popular) return false;
 
-      // If Veg is ON, item must have 'veg' tag
-      if (filters.veg && !item.tags?.includes('veg')) return false;
+      const str = (item.name + " " + (item.description || "")).toLowerCase();
+      const isNonVeg = str.includes('chicken') || str.includes('mutton') || str.includes('beef') || str.includes('pork') || str.includes('fish') || str.includes('prawn') || str.includes('egg') || str.includes('meat') || item.category === 'Shawarma' || item.category === 'Barbeque' || item.category === 'Kebab';
+      const isVeg = !isNonVeg;
 
-      // If Non-Veg is ON, item must have 'nonveg' tag
-      if (filters.nonveg && !item.tags?.includes('nonveg')) return false;
+      if (filters.veg && !isVeg) return false;
+      if (filters.nonveg && !isNonVeg) return false;
 
       return true;
     });
@@ -199,20 +201,26 @@ const Menu = () => {
                   {category}
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {categoryItems.map((food) => (
-                    <FoodCard
-                      key={food.id || food._id}
-                      image={food.image}
-                      name={food.name}
-                      description={food.description}
-                      price={food.price}
-                      tags={food.tags} // Pass tags to card
-                      available={food.available}
-                      liked={favouriteIds.has(food._id || food.id)}
-                      onToggleLike={() => toggleFavourite(food)}
-                      onCustomize={() => handleCustomize(food)}
-                    />
-                  ))}
+                  {categoryItems.map((food) => {
+                    const rules = getCustomizationsForCategory(food.category);
+                    const hasCustomization = rules.length > 0;
+                    return (
+                      <FoodCard
+                        key={food.id || food._id}
+                        image={food.image}
+                        name={food.name}
+                        description={food.description}
+                        price={food.price}
+                        tags={food.tags}
+                        available={food.available}
+                        liked={favouriteIds.has(food._id || food.id)}
+                        onToggleLike={() => toggleFavourite(food)}
+                        hasCustomization={hasCustomization}
+                        onCustomize={() => handleCustomize(food)}
+                        onAddToCart={() => handleAddToCart(food.id || food._id, food.price, { addOns: [], customizationsPrice: 0 })}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             );

@@ -108,7 +108,6 @@ const AdminLogin = () => {
             theme="filled_black"
             shape="pill"
             text="signin_with"
-            width="100%"
           />
         </div>
 

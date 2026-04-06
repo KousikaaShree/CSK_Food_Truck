@@ -120,7 +120,7 @@ const OrderConfirmation = () => {
             ))}
             <div className="border-t border-white/10 pt-2 mt-2">
               <div className="flex justify-between font-bold text-csk-yellow">
-                <span>Total</span>
+                <span>Final Total</span>
                 <span>₹{order.total.toFixed(2)}</span>
               </div>
             </div>

@@ -16,6 +16,7 @@ app.use(cors({
     "https://csk-food-truck.vercel.app", 
     "http://localhost:5173",
     "http://localhost:3000",
+    "http://cskfoodtruck.nandeesh.fun",
     process.env.FRONTEND_URL // Configure this in AWS EC2 .env to match S3 frontend URL
   ].filter(Boolean),
   credentials: true

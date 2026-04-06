@@ -192,34 +192,46 @@ router.get('/orders', verifyToken, requireAdmin, async (req, res) => {
       email, 
       fromDate, 
       toDate, 
+      status,
       sortBy = 'createdAt', 
       sortOrder = 'desc' 
     } = req.query;
 
     const query = {};
+    const andConditions = [];
 
-    if (orderId) query.orderId = { $regex: orderId, $options: 'i' };
+    if (orderId) andConditions.push({ orderId: { $regex: orderId, $options: 'i' } });
     if (customerName) {
-      query.$or = [
-        { 'address.name': { $regex: customerName, $options: 'i' } },
-        { 'user.name': { $regex: customerName, $options: 'i' } }
-      ];
+      andConditions.push({
+        $or: [
+          { 'address.name': { $regex: customerName, $options: 'i' } },
+          { 'user.name': { $regex: customerName, $options: 'i' } }
+        ]
+      });
     }
     if (email) {
-      query.$or = [
-        { 'address.email': { $regex: email, $options: 'i' } },
-        { 'user.email': { $regex: email, $options: 'i' } }
-      ];
+      andConditions.push({
+        $or: [
+          { 'address.email': { $regex: email, $options: 'i' } },
+          { 'user.email': { $regex: email, $options: 'i' } }
+        ]
+      });
     }
+    if (status) andConditions.push({ status: status });
 
     if (fromDate || toDate) {
-      query.createdAt = {};
-      if (fromDate) query.createdAt.$gte = new Date(fromDate);
+      const dateCond = {};
+      if (fromDate) dateCond.$gte = new Date(fromDate);
       if (toDate) {
         const end = new Date(toDate);
         end.setHours(23, 59, 59, 999);
-        query.createdAt.$lte = end;
+        dateCond.$lte = end;
       }
+      andConditions.push({ createdAt: dateCond });
+    }
+
+    if (andConditions.length > 0) {
+      query.$and = andConditions;
     }
 
     const sortOptions = {};
@@ -299,8 +311,7 @@ router.get('/orders/:id/pdf', verifyToken, requireAdmin, async (req, res) => {
     const pdfBuffer = await generateOrderPDFBuffer(order);
     
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename=Order_${order.orderId}.pdf`);
-    res.end(pdfBuffer, 'binary');
+    res.send(pdfBuffer);
   } catch (error) {
     console.error('PDF Order Error:', error);
     res.status(500).json({ message: 'Server error generating PDF', error: error.message });
@@ -310,37 +321,49 @@ router.get('/orders/:id/pdf', verifyToken, requireAdmin, async (req, res) => {
 // Download Bulk Orders PDF (based on current filters)
 router.get('/orders/export/pdf', verifyToken, requireAdmin, async (req, res) => {
   try {
-    const { orderId, customerName, email, fromDate, toDate } = req.query;
+    const { orderId, customerName, email, fromDate, toDate, status } = req.query;
     const query = {};
-    if (orderId) query.orderId = { $regex: orderId, $options: 'i' };
+    const andConditions = [];
+
+    if (orderId) andConditions.push({ orderId: { $regex: orderId, $options: 'i' } });
     if (customerName) {
-      query.$or = [
-        { 'address.name': { $regex: customerName, $options: 'i' } },
-        { 'user.name': { $regex: customerName, $options: 'i' } }
-      ];
+      andConditions.push({
+        $or: [
+          { 'address.name': { $regex: customerName, $options: 'i' } },
+          { 'user.name': { $regex: customerName, $options: 'i' } }
+        ]
+      });
     }
     if (email) {
-      query.$or = [
-        { 'address.email': { $regex: email, $options: 'i' } },
-        { 'user.email': { $regex: email, $options: 'i' } }
-      ];
+      andConditions.push({
+        $or: [
+          { 'address.email': { $regex: email, $options: 'i' } },
+          { 'user.email': { $regex: email, $options: 'i' } }
+        ]
+      });
     }
+    if (status) andConditions.push({ status: status });
+
     if (fromDate || toDate) {
-      query.createdAt = {};
-      if (fromDate) query.createdAt.$gte = new Date(fromDate);
+      const dateCond = {};
+      if (fromDate) dateCond.$gte = new Date(fromDate);
       if (toDate) {
-         const end = new Date(toDate);
-         end.setHours(23, 59, 59, 999);
-         query.createdAt.$lte = end;
+        const end = new Date(toDate);
+        end.setHours(23, 59, 59, 999);
+        dateCond.$lte = end;
       }
+      andConditions.push({ createdAt: dateCond });
+    }
+
+    if (andConditions.length > 0) {
+      query.$and = andConditions;
     }
 
     const orders = await Order.find(query).sort({ createdAt: -1 });
     const pdfBuffer = await generateBulkOrdersPDFBuffer(orders, `Orders Report (${orders.length} orders)`);
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename=Orders_Report.pdf');
-    res.end(pdfBuffer, 'binary');
+    res.send(pdfBuffer);
   } catch (error) {
     console.error('PDF Bulk Error:', error);
     res.status(500).json({ message: 'Server error generating bulk PDF', error: error.message });
@@ -506,8 +529,7 @@ router.get('/customer-orders', verifyToken, requireAdmin, async (req, res) => {
     if (exportPdf === 'true') {
       const pdfBuffer = await generateCustomerReportPDFBuffer(rows);
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', 'attachment; filename=Customer_Orders_Report.pdf');
-      return res.end(pdfBuffer, 'binary');
+      return res.send(pdfBuffer);
     }
 
     res.json(rows);

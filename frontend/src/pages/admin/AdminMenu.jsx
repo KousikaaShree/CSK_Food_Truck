@@ -44,12 +44,12 @@ const AdminMenu = () => {
         headers: { Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}` }
       });
       console.log('Categories fetched:', res.data);
-      // Filter to only allow: Shawarma, Kebab, Barbeque, Beverages
-      const allowedCategories = ['Shawarma', 'Kebab', 'Barbeque', 'Beverages'];
+      // Filter to only allow: Shawarma, Kebab, Barbeque, Desert
+      const allowedCategories = ['Shawarma', 'Kebab', 'Barbeque', 'Desert'];
       const filtered = (res.data || []).filter(cat => allowedCategories.includes(cat.name));
       setCategories(filtered);
       if (filtered.length === 0) {
-        console.warn('No valid categories found. Please ensure categories are seeded: Shawarma, Kebab, Barbeque, Beverages');
+        console.warn('No valid categories found. Please ensure categories are seeded: Shawarma, Kebab, Barbeque, Desert');
       }
     } catch (error) {
       console.error('Error fetching categories:', error);

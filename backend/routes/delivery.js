@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const { authenticateUser } = require('../middleware/auth');
+const { getDeliveryChargeForDistanceKm } = require('../utils/pricing');
 
 // Shop Coordinates (Theni, Tamil Nadu)
 // These can be moved to .env for production
@@ -57,22 +58,13 @@ router.post('/calculate', authenticateUser, async (req, res) => {
         const distanceValue = distRes.data.rows[0].elements[0].distance.value; // In meters
         const distanceKm = distanceValue / 1000;
 
-        let deliveryFee = 0;
-        let available = true;
-
-        if (distanceKm <= 10) {
-            deliveryFee = 30;
-        } else if (distanceKm <= 15) {
-            deliveryFee = 50;
-        } else {
-            available = false;
-        }
+        const { allowed, deliveryCharge } = getDeliveryChargeForDistanceKm(distanceKm);
 
         res.json({
             distance: distanceText,
             distanceValue: distanceValue,
-            deliveryFee,
-            available
+            deliveryFee: deliveryCharge,
+            available: allowed
         });
 
     } catch (error) {

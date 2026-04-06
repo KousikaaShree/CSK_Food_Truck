@@ -35,9 +35,7 @@ const Cart = () => {
   }
 
   const subtotal = cart.total || 0;
-  // const tax = subtotal * 0.18; // Assuming tax might be inclusive or exclusive. Let's keep it simple or strictly follow request. Request said "18% GST".
-  const tax = subtotal * 0.18;
-  const total = subtotal + tax;
+  const total = subtotal;
 
   return (
     <div className="min-h-screen py-12 px-4 bg-gradient-to-b from-[#0b0b0e] via-[#0f0f14] to-[#0b0b0e] text-white">
@@ -164,12 +162,8 @@ const Cart = () => {
 
               <div className="space-y-3 text-sm mb-6 border-b border-white/10 pb-6">
                 <div className="flex justify-between text-gray-400">
-                  <span>Subtotal</span>
+                  <span>Item Total</span>
                   <span className="text-white font-medium">₹{subtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-gray-400">
-                  <span>Tax (18% GST)</span>
-                  <span className="text-white font-medium">₹{tax.toFixed(2)}</span>
                 </div>
               </div>
 

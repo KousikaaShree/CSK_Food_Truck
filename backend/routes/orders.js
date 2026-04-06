@@ -4,7 +4,17 @@ const { authenticateUser } = require('../middleware/auth');
 const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 const Food = require('../models/Food');
+const { getCustomizationsForCategory } = require('../utils/customizations');
 const { sendOrderConfirmationEmail } = require('../utils/sendEmail');
+const {
+  getDeliveryChargeForDistanceKm,
+  calculateFinalTotal,
+  haversineDistanceKm
+} = require('../utils/pricing');
+
+// Shop fixed coordinates (can be overridden via env for different deployments).
+const SHOP_LAT = process.env.SHOP_LAT || 10.0104;
+const SHOP_LNG = process.env.SHOP_LNG || 77.4768;
 
 const buildOrderConfirmation = (order) => {
   const istNow = new Date(
@@ -83,9 +93,53 @@ router.post('/create', authenticateUser, async (req, res) => {
     }
     */
 
-    const { address, paymentMethod, razorpayOrderId, razorpayPaymentId, razorpaySignature, cartItems, deliveryFee } = req.body;
-    const finalDeliveryFee = Number(deliveryFee) || 0;
-    console.log('Creating order with:', { address, paymentMethod, hasCartItems: !!cartItems, deliveryFee: finalDeliveryFee });
+    const {
+      address,
+      paymentMethod,
+      razorpayOrderId,
+      razorpayPaymentId,
+      razorpaySignature,
+      cartItems,
+      customerLocation,
+      distanceValue
+    } = req.body;
+
+    let distanceKm;
+
+    // Preferred: compute from geolocation coordinates (Haversine).
+    const customerLat = Number(customerLocation?.latitude);
+    const customerLng = Number(customerLocation?.longitude);
+    const hasValidCoords =
+      Number.isFinite(customerLat) &&
+      Number.isFinite(customerLng) &&
+      customerLat >= -90 &&
+      customerLat <= 90 &&
+      customerLng >= -180 &&
+      customerLng <= 180;
+
+    if (hasValidCoords) {
+      distanceKm = haversineDistanceKm(customerLat, customerLng, SHOP_LAT, SHOP_LNG);
+    } else if (distanceValue !== undefined && distanceValue !== null) {
+      // Fallback: frontend provided distance (meters) from backend address-based calculation.
+      const distanceMeters = Number(distanceValue);
+      distanceKm = distanceMeters / 1000;
+    }
+
+    if (!Number.isFinite(distanceKm)) {
+      return res.status(400).json({ message: 'Customer location (coords) or distanceValue is required.' });
+    }
+
+    const { allowed: isDeliverable, deliveryCharge: finalDeliveryFee } = getDeliveryChargeForDistanceKm(distanceKm);
+    if (!isDeliverable) {
+      return res.status(400).json({ message: 'Delivery is not available in your area (over 15km).' });
+    }
+
+    console.log('Creating order with delivery:', {
+      paymentMethod,
+      hasCartItems: !!cartItems,
+      distanceKm: Number(distanceKm.toFixed(3)),
+      deliveryFee: finalDeliveryFee
+    });
 
     let cart = await Cart.findOne({ user: req.user._id }).populate('items.food');
     
@@ -145,10 +199,26 @@ router.post('/create', authenticateUser, async (req, res) => {
           continue;
         }
         
+        // Security Validation: Rebuild Price from local Maps
+        const categoryRules = food ? getCustomizationsForCategory(food.categoryName) : [];
+        let validAddonsTotal = 0;
+        const validAddons = [];
+
+        if (item.customizationData && item.customizationData.addOns) {
+          for (const addon of item.customizationData.addOns) {
+            const rule = categoryRules.find(r => r.name === addon.name);
+            if (rule) {
+              validAddonsTotal += rule.price;
+              validAddons.push({ name: rule.name, price: rule.price });
+            } else {
+              console.warn(`[Security Warning] Blocked invalid addon requested from frontend: ${addon.name} for ${food.name}`);
+            }
+          }
+        }
+
         // Use the price from the item if available, otherwise calculate from food
         const itemPrice = item.price ? Number(item.price) : Number(food.price);
-        const addOnsTotal = item.customizationData?.addOns?.reduce((sum, addon) => sum + Number(addon.price || 0), 0) || 0;
-        const finalUnitPrice = itemPrice + addOnsTotal;
+        const finalUnitPrice = itemPrice + validAddonsTotal;
         const itemQuantity = Number(item.quantity) || 1;
         
         validatedItems.push({
@@ -156,7 +226,10 @@ router.post('/create', authenticateUser, async (req, res) => {
           name: food.name,
           quantity: itemQuantity,
           price: finalUnitPrice,
-          customizationData: item.customizationData || { addOns: [] }
+          customizationData: { 
+            addOns: validAddons, 
+            customizationsPrice: validAddonsTotal 
+          }
         });
         
         calculatedSubtotal += finalUnitPrice * itemQuantity;
@@ -166,9 +239,8 @@ router.post('/create', authenticateUser, async (req, res) => {
         return res.status(400).json({ message: 'No valid items found in cart' });
       }
       
-      const tax = calculatedSubtotal * 0.18;
-      const total = calculatedSubtotal + tax + finalDeliveryFee;
-      
+      const total = calculateFinalTotal(calculatedSubtotal, finalDeliveryFee);
+
       const order = new Order({
         orderId: generateOrderId(),
         user: req.user._id,
@@ -184,7 +256,6 @@ router.post('/create', authenticateUser, async (req, res) => {
         razorpayPaymentId: paymentMethod === 'razorpay' ? razorpayPaymentId : undefined,
         razorpaySignature: paymentMethod === 'razorpay' ? razorpaySignature : undefined,
         subtotal: calculatedSubtotal,
-        tax,
         deliveryFee: finalDeliveryFee,
         total,
         estimatedDeliveryTime: new Date(Date.now() + 45 * 60 * 1000)
@@ -208,23 +279,49 @@ router.post('/create', authenticateUser, async (req, res) => {
       return res.status(400).json({ message: 'Cart is empty' });
     }
 
-    const subtotal = cart.total;
-    const tax = subtotal * 0.18; // 18% GST
-    const total = subtotal + tax + finalDeliveryFee;
+    // Fallback iteration: validate backend database cart identically
+    const orderItems = [];
+    let backendCalculatedSubtotal = 0;
 
-    const orderItems = cart.items.map(item => {
+    for (const item of cart.items) {
       if (!item.food) {
         console.error('Cart item missing food object:', item);
-        return null;
+        continue;
       }
-      return {
-        food: item.food._id,
-        name: item.food.name,
-        quantity: item.quantity,
-        price: item.price,
-        customizationData: item.customizationData
-      };
-    }).filter(i => i !== null);
+
+      const foodRef = item.food;
+      const categoryRules = getCustomizationsForCategory(foodRef.categoryName);
+      
+      let validAddonsTotal = 0;
+      const validAddons = [];
+
+      if (item.customizationData && item.customizationData.addOns) {
+        for (const addon of item.customizationData.addOns) {
+          const rule = categoryRules.find(r => r.name === addon.name);
+          if (rule) {
+            validAddonsTotal += rule.price;
+            validAddons.push({ name: rule.name, price: rule.price });
+          }
+        }
+      }
+
+      const itemPrice = item.price ? Number(item.price) : Number(foodRef.price);
+      const finalUnitPrice = itemPrice + validAddonsTotal;
+      const itemQuantity = Number(item.quantity) || 1;
+
+      orderItems.push({
+        food: foodRef._id,
+        name: foodRef.name,
+        quantity: itemQuantity,
+        price: finalUnitPrice,
+        customizationData: { addOns: validAddons, customizationsPrice: validAddonsTotal }
+      });
+
+      backendCalculatedSubtotal += finalUnitPrice * itemQuantity;
+    }
+
+    const subtotal = backendCalculatedSubtotal;
+    const total = calculateFinalTotal(subtotal, finalDeliveryFee);
 
     const order = new Order({
       orderId: generateOrderId(),
@@ -241,7 +338,6 @@ router.post('/create', authenticateUser, async (req, res) => {
       razorpayPaymentId: paymentMethod === 'razorpay' ? razorpayPaymentId : undefined,
       razorpaySignature: paymentMethod === 'razorpay' ? razorpaySignature : undefined,
       subtotal,
-      tax,
       deliveryFee: finalDeliveryFee,
       total,
       estimatedDeliveryTime: new Date(Date.now() + 45 * 60 * 1000) // 45 minutes

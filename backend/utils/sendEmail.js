@@ -96,12 +96,8 @@ const sendOrderConfirmationEmail = async (order) => {
             </tbody>
             <tfoot>
               <tr>
-                <td colspan="2" style="padding: 10px; text-align: right; color: #555;">Subtotal:</td>
+                <td colspan="2" style="padding: 10px; text-align: right; color: #555;">Item Total:</td>
                 <td style="padding: 10px; text-align: right; color: #333; font-weight: bold;">₹${order.subtotal.toFixed(2)}</td>
-              </tr>
-              <tr>
-                <td colspan="2" style="padding: 10px; text-align: right; color: #555;">GST (18%):</td>
-                <td style="padding: 10px; text-align: right; color: #333; font-weight: bold;">₹${order.tax.toFixed(2)}</td>
               </tr>
               ${order.deliveryFee > 0 ? `
               <tr>

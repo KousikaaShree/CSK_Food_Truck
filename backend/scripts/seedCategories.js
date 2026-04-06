@@ -8,7 +8,7 @@ const categories = [
   { name: 'Shawarma', description: 'Delicious Middle Eastern wraps with marinated meats and fresh vegetables' },
   { name: 'Kebab', description: 'Grilled skewers of seasoned meats, perfect for sharing' },
   { name: 'Barbeque', description: 'Smoky grilled meats and vegetables with authentic BBQ flavors' },
-  { name: 'Beverages', description: 'Refreshing drinks including juices, sodas, and specialty beverages' }
+  { name: 'Desert', description: 'Sweet treats and after-meal delights' }
 ];
 
 async function seedCategories() {

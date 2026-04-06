@@ -6,7 +6,7 @@ const MenuContext = createContext(null);
 
 const STORAGE_KEY = 'csk_menu_items_v1';
 
-export const ADMIN_CATEGORIES = ['Shawarma', 'Kebab', 'Barbeque', 'Beverages'];
+export const ADMIN_CATEGORIES = ['Shawarma', 'Kebab', 'Barbeque', 'Desert'];
 
 const DEFAULT_ITEMS = [
   {
@@ -38,7 +38,7 @@ const DEFAULT_ITEMS = [
   },
   {
     id: 'seed-4',
-    category: 'Beverages',
+    category: 'Desert',
     name: 'Fresh Lime Soda',
     description: 'Crisp, refreshing, and perfectly balanced.',
     price: 60,
@@ -81,6 +81,7 @@ export const MenuProvider = ({ children }) => {
             price: f.price,
             tags: [],
             image: f.image,
+            popular: f.popular,
             available: f.available
           }));
           setItems(mapped);
