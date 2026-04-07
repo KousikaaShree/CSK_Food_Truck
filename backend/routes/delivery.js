@@ -1,8 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const axios = require('axios');
 const { authenticateUser } = require('../middleware/auth');
 const { getDeliveryChargeForDistanceKm } = require('../utils/pricing');
+const {
+  geocodeAddressToLatLng,
+  distanceMatrixMeters,
+  getGoogleMapsApiKey,
+  reverseGeocodeLatLngToAddress
+} = require('../utils/googleMaps');
 
 // Shop Coordinates (Theni, Tamil Nadu)
 // These can be moved to .env for production
@@ -16,59 +21,94 @@ const SHOP_LNG = process.env.SHOP_LNG || 77.4768;
  */
 router.post('/calculate', authenticateUser, async (req, res) => {
     try {
-        const { address } = req.body;
-        
-        if (!address || !address.fullAddress) {
-            return res.status(400).json({ message: 'Address is required' });
-        }
+        const { address, location } = req.body;
 
-        const apiKey = process.env.GOOGLE_MAPS_API_KEY;
-        if (!apiKey || apiKey === 'your_google_maps_api_key_here') {
-            // Placeholder logic if API key isn't set (for testing)
+        // Optional: keep a friendly test response if key isn't configured
+        if (!getGoogleMapsApiKey()) {
             console.warn('Google Maps API Key not set. Using fallback logic.');
             return res.json({
-                distance: "5.0 km",
-                distanceValue: 5000,
+                distance: "1.5 km",
+                distanceValue: 1500,
+                distanceKm: 1.5,
+                deliveryCharge: 30,
+                isDeliverable: true,
+                message: "Test mode: API key missing",
                 deliveryFee: 30,
-                available: true,
-                message: "Test mode: API key missing"
+                available: true
             });
         }
 
-        // 1. Geocode the address to get coordinates
-        const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address.fullAddress + ' ' + address.city)}&key=${apiKey}`;
-        const geocodeRes = await axios.get(geocodeUrl);
+        let destLat;
+        let destLng;
 
-        if (geocodeRes.data.status !== 'OK') {
-            return res.status(400).json({ message: 'Invalid address. Could not calculate distance.' });
+        // Option 1: lat/lng directly (auto location)
+        const lat = Number(location?.lat ?? location?.latitude);
+        const lng = Number(location?.lng ?? location?.longitude);
+        const hasCoords = Number.isFinite(lat) && Number.isFinite(lng);
+        let resolvedAddress = null;
+
+        if (hasCoords) {
+            destLat = lat;
+            destLng = lng;
+            // Try to resolve a human-readable address for autofill.
+            try {
+                resolvedAddress = await reverseGeocodeLatLngToAddress(destLat, destLng);
+            } catch (e) {
+                console.warn('Reverse geocode failed for current location:', e.message);
+            }
+        } else {
+            // Option 2: address string/object (manual input)
+            if (!address) {
+                return res.status(400).json({ message: 'Provide either address or location (lat/lng).' });
+            }
+
+            const addressText =
+                typeof address === 'string'
+                    ? address
+                    : [address.fullAddress, address.area, address.city, address.pincode].filter(Boolean).join(' ');
+
+            if (!addressText || addressText.trim().length < 6) {
+                return res.status(400).json({ message: 'Invalid address. Please enter a full address.' });
+            }
+
+            const coords = await geocodeAddressToLatLng(addressText);
+            destLat = coords.lat;
+            destLng = coords.lng;
         }
 
-        const destLat = geocodeRes.data.results[0].geometry.location.lat;
-        const destLng = geocodeRes.data.results[0].geometry.location.lng;
-
-        // 2. Calculate distance using Distance Matrix API
-        const distUrl = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${SHOP_LAT},${SHOP_LNG}&destinations=${destLat},${destLng}&key=${apiKey}`;
-        const distRes = await axios.get(distUrl);
-
-        if (distRes.data.status !== 'OK' || distRes.data.rows[0].elements[0].status !== 'OK') {
-            return res.status(400).json({ message: 'Could not calculate distance to this location.' });
-        }
-
-        const distanceText = distRes.data.rows[0].elements[0].distance.text;
-        const distanceValue = distRes.data.rows[0].elements[0].distance.value; // In meters
+        // Road distance via Distance Matrix API
+        const { distanceText, distanceValue } = await distanceMatrixMeters(SHOP_LAT, SHOP_LNG, destLat, destLng);
         const distanceKm = distanceValue / 1000;
-
         const { allowed, deliveryCharge } = getDeliveryChargeForDistanceKm(distanceKm);
+        const roundedDistanceKm = Number(distanceKm.toFixed(2));
+        const message = allowed
+            ? 'Delivery available'
+            : 'Delivery not available. Location is outside 15 km radius from the shop.';
 
         res.json({
             distance: distanceText,
-            distanceValue: distanceValue,
+            distanceValue,
+            distanceKm: roundedDistanceKm,
+            deliveryCharge,
+            isDeliverable: allowed,
+            message,
+            // Backward-compatible keys for existing UI parts
             deliveryFee: deliveryCharge,
-            available: allowed
+            available: allowed,
+            resolvedAddress
         });
 
     } catch (error) {
         console.error('Delivery calculation error:', error);
+        if (error?.code === 'GEOCODE_FAILED') {
+            return res.status(400).json({ message: 'Invalid address. Could not calculate distance.' });
+        }
+        if (error?.code === 'DISTANCE_MATRIX_FAILED') {
+            return res.status(400).json({ message: 'Could not calculate distance to this location.' });
+        }
+        if (error?.code === 'NO_GOOGLE_MAPS_KEY') {
+            return res.status(500).json({ message: 'Google Maps API is not configured.' });
+        }
         res.status(500).json({ message: 'Error calculating delivery fee' });
     }
 });

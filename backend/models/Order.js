@@ -61,6 +61,10 @@ const orderSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  deliveryDistanceKm: {
+    type: Number,
+    default: 0
+  },
   total: {
     type: Number,
     required: true

@@ -1,40 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import API_URL from '../config';
-
-const SHOP_LAT = Number(import.meta.env.VITE_SHOP_LAT) || 10.0104;
-const SHOP_LNG = Number(import.meta.env.VITE_SHOP_LNG) || 77.4768;
-
-// Distance between two lat/lng pairs using the Haversine formula.
-// Returns distance in kilometers.
-function haversineDistanceKm(lat1, lon1, lat2, lon2) {
-  const φ1 = Number(lat1) * (Math.PI / 180);
-  const φ2 = Number(lat2) * (Math.PI / 180);
-  const Δφ = (Number(lat2) - Number(lat1)) * (Math.PI / 180);
-  const Δλ = (Number(lon2) - Number(lon1)) * (Math.PI / 180);
-
-  if (![φ1, φ2, Δφ, Δλ].every(Number.isFinite)) return NaN;
-
-  const a =
-    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-    Math.cos(φ1) * Math.cos(φ2) *
-      Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  const R = 6371; // km
-  return R * c;
-}
-
-function getDeliveryChargeForDistanceKm(distanceKm) {
-  const km = Number(distanceKm);
-  if (!Number.isFinite(km) || km < 0) return { allowed: false, deliveryCharge: 0 };
-  if (km <= 10) return { allowed: true, deliveryCharge: 30 };
-  if (km <= 15) return { allowed: true, deliveryCharge: 50 };
-  return { allowed: false, deliveryCharge: 0 };
-}
 
 
 const Checkout = () => {
@@ -53,13 +22,18 @@ const Checkout = () => {
   const [distanceValue, setDistanceValue] = useState(null);
   const [customerLocation, setCustomerLocation] = useState(null); // { latitude, longitude }
   const [deliveryReady, setDeliveryReady] = useState(false);
+  const [calculatingDelivery, setCalculatingDelivery] = useState(false);
   const [isDeliverable, setIsDeliverable] = useState(true);
   const [geoStatus, setGeoStatus] = useState('idle'); // idle | loading | granted | denied | error
+  const [deliveryMode, setDeliveryMode] = useState('manual'); // manual | auto
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [showLocationSlowMessage, setShowLocationSlowMessage] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('razorpay');
   const [isWithinOrderWindow, setIsWithinOrderWindow] = useState(true);
   const [currentISTTime, setCurrentISTTime] = useState('');
+  const locationTimeoutRef = useRef(null);
 
   const subtotal = cart?.total || 0;
   const total = subtotal + deliveryFee;
@@ -110,80 +84,156 @@ const Checkout = () => {
     return () => clearInterval(intervalId);
   }, []);
 
-  // Detect user location for delivery distance (Haversine).
-  useEffect(() => {
+  const applyDeliveryResult = (data) => {
+    setDistance(data?.distance || '');
+    setDeliveryFee(Number(data?.deliveryCharge ?? data?.deliveryFee) || 0);
+    setDistanceValue(data?.distanceValue ?? null);
+    setIsDeliverable(Boolean(data?.isDeliverable ?? data?.available));
+    setDeliveryReady(true);
+    if ((data?.isDeliverable ?? data?.available) === false) {
+      setError(data?.message || 'Delivery not available. Location is outside 15 km radius from the shop.');
+    } else {
+      setError('');
+    }
+
+    // If backend resolved an address (from current location), autofill the form.
+    if (data?.resolvedAddress) {
+      setFormData((prev) => ({
+        ...prev,
+        fullAddress: data.resolvedAddress.fullAddress || prev.fullAddress,
+        city: data.resolvedAddress.city || prev.city,
+        area: data.resolvedAddress.area || prev.area,
+        pincode: data.resolvedAddress.pincode || prev.pincode
+      }));
+    }
+  };
+
+  const resetDeliveryState = ({ clearAddress = false } = {}) => {
+    setCustomerLocation(null);
+    setDistance('');
+    setDistanceValue(null);
+    setDeliveryFee(0);
+    setDeliveryReady(false);
+    setIsDeliverable(true);
+    setError('');
+    setGeoStatus('idle');
+    setShowLocationSlowMessage(false);
+
+    if (clearAddress) {
+      setFormData((prev) => ({
+        ...prev,
+        fullAddress: '',
+        city: '',
+        area: '',
+        pincode: ''
+      }));
+    }
+  };
+
+  const handleSwitchToManual = () => {
+    setDeliveryMode('manual');
+    resetDeliveryState({ clearAddress: true });
+  };
+
+  const handleSwitchToAuto = async () => {
+    setDeliveryMode('auto');
+    resetDeliveryState();
+    await handleUseCurrentLocation();
+  };
+
+  const handleCalculateDelivery = async () => {
+    if (!formData.fullAddress || !formData.city) {
+      setError('Please enter full address and city first');
+      return;
+    }
+
+    setCalculatingDelivery(true);
+    setError('');
+    try {
+      const res = await axios.post(
+        `${API_URL}/api/delivery/calculate`,
+        { address: formData },
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+      );
+      applyDeliveryResult(res.data);
+      setCustomerLocation(null);
+    } catch (err) {
+      console.error('Delivery calculation error:', err);
+      setError(err.response?.data?.message || 'Could not calculate delivery fee. Please try again.');
+      setDeliveryReady(false);
+    } finally {
+      setCalculatingDelivery(false);
+    }
+  };
+
+  const handleUseCurrentLocation = async () => {
     if (!navigator.geolocation) {
       setGeoStatus('error');
-      setDeliveryReady(false);
-      setIsDeliverable(false);
-      setError('Location is not supported by your browser. Please verify delivery manually.');
+      setError('Location is not supported by your browser.');
       return;
     }
 
     setGeoStatus('loading');
+    setCalculatingDelivery(true);
+    setIsDetectingLocation(true);
+    setShowLocationSlowMessage(false);
+    setError('');
+    if (locationTimeoutRef.current) clearTimeout(locationTimeoutRef.current);
+    locationTimeoutRef.current = setTimeout(() => {
+      setShowLocationSlowMessage(true);
+    }, 10000);
 
-    let cancelled = false;
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        if (cancelled) return;
+      async (pos) => {
+        try {
+          const lat = pos?.coords?.latitude;
+          const lng = pos?.coords?.longitude;
+          if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+            setGeoStatus('error');
+            setError('Invalid coordinates received. Please try again.');
+            setCalculatingDelivery(false);
+            return;
+          }
 
-        const lat = pos?.coords?.latitude;
-        const lng = pos?.coords?.longitude;
+          const res = await axios.post(
+            `${API_URL}/api/delivery/calculate`,
+            { location: { lat, lng } },
+            { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+          );
 
-        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+          setGeoStatus('granted');
+          setCustomerLocation({ latitude: lat, longitude: lng });
+          applyDeliveryResult(res.data);
+        } catch (e) {
           setGeoStatus('error');
+          setError(e.response?.data?.message || 'Unable to fetch location.');
           setDeliveryReady(false);
-          setIsDeliverable(false);
-          setCustomerLocation(null);
-          setDeliveryFee(0);
-          setDistance('');
-          setDistanceValue(null);
-          setError('Invalid coordinates received. Please try again.');
-          return;
-        }
-
-        const distanceKm = haversineDistanceKm(lat, lng, SHOP_LAT, SHOP_LNG);
-        const { allowed, deliveryCharge } = getDeliveryChargeForDistanceKm(distanceKm);
-
-        setCustomerLocation({ latitude: lat, longitude: lng });
-        setDistance(`${distanceKm.toFixed(1)} km`);
-        setDeliveryFee(deliveryCharge);
-        setDistanceValue(Math.round(distanceKm * 1000)); // meters (for backward compatibility)
-        setIsDeliverable(allowed);
-        setDeliveryReady(true);
-        setGeoStatus('granted');
-
-        if (!allowed) {
-          setError('Sorry, delivery is not available in your area');
-        } else {
-          setError('');
+        } finally {
+          if (locationTimeoutRef.current) clearTimeout(locationTimeoutRef.current);
+          setShowLocationSlowMessage(false);
+          setIsDetectingLocation(false);
+          setCalculatingDelivery(false);
         }
       },
       (err) => {
-        if (cancelled) return;
-        const code = err?.code;
-
-        setGeoStatus(code === 1 ? 'denied' : 'error');
-        setDeliveryReady(false);
-        setCustomerLocation(null);
-        setDeliveryFee(0);
-        setDistance('');
-        setDistanceValue(null);
-        setIsDeliverable(false);
-
-        if (code === 1) {
-          setError('Location permission denied. Please enable location to calculate delivery distance.');
-        } else if (code === 2) {
-          setError('Location unavailable. Please try again.');
+        setGeoStatus(err?.code === 1 ? 'denied' : 'error');
+        if (err?.code === 1) {
+          setError('Location permission denied. Please enable GPS/location.');
         } else {
-          setError('Location request timed out. Please try again.');
+          setError('Unable to fetch location. Please enable GPS/location and try again.');
         }
+        if (locationTimeoutRef.current) clearTimeout(locationTimeoutRef.current);
+        setShowLocationSlowMessage(false);
+        setIsDetectingLocation(false);
+        setCalculatingDelivery(false);
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
+  };
 
+  useEffect(() => {
     return () => {
-      cancelled = true;
+      if (locationTimeoutRef.current) clearTimeout(locationTimeoutRef.current);
     };
   }, []);
 
@@ -394,7 +444,11 @@ const Checkout = () => {
     }
 
     if (!deliveryReady) {
-      setError('Please enable location to calculate delivery before placing your order.');
+      if (deliveryMode === 'auto') {
+        setError('Please click "Use My Current Location" to calculate delivery before placing your order.');
+      } else {
+        setError('Please click "Verify Delivery & Calculate Fee" before placing your order.');
+      }
       return;
     }
 
@@ -449,6 +503,45 @@ const Checkout = () => {
         <div className="grid md:grid-cols-2 gap-6">
           <div className="bg-[#14151a] rounded-2xl shadow-soft ring-1 ring-white/10 p-6">
             <h2 className="text-xl font-bold text-white mb-4">Delivery Address</h2>
+            <div className="mb-4 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={handleSwitchToManual}
+                disabled={isDetectingLocation || calculatingDelivery}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold ring-1 ring-white/10 transition ${
+                  deliveryMode === 'manual' ? 'bg-csk-yellow text-[#0b0b0f]' : 'bg-white/5 text-gray-200 hover:bg-white/10'
+                }`}
+              >
+                Enter Address Manually
+              </button>
+              <button
+                type="button"
+                onClick={handleSwitchToAuto}
+                disabled={isDetectingLocation || calculatingDelivery}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold ring-1 ring-white/10 transition ${
+                  deliveryMode === 'auto' ? 'bg-csk-yellow text-[#0b0b0f]' : 'bg-white/5 text-gray-200 hover:bg-white/10'
+                }`}
+              >
+                {isDetectingLocation ? (
+                  <span className="inline-flex items-center gap-2">
+                    <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    Detecting...
+                  </span>
+                ) : (
+                  'Use My Current Location'
+                )}
+              </button>
+            </div>
+            {isDetectingLocation && (
+              <div className="mb-3 text-xs text-gray-300">
+                Detecting your location, please wait...
+              </div>
+            )}
+            {showLocationSlowMessage && (
+              <div className="mb-3 text-xs text-csk-yellow">
+                Still trying to get your location...
+              </div>
+            )}
             <form onSubmit={handleSubmit} className="space-y-4" style={{ opacity: (!cart || !Array.isArray(cart.items) || cart.items.length === 0) ? 0.5 : 1 }}>
               <div>
                 <label className="block text-gray-200 mb-2">Full Address</label>
@@ -457,6 +550,7 @@ const Checkout = () => {
                   value={formData.fullAddress}
                   onChange={handleChange}
                   required
+                  disabled={deliveryMode === 'auto'}
                   rows="3"
                   className="w-full px-4 py-2 border border-white/10 rounded-lg bg-[#0f0f14] text-white placeholder:text-gray-500 focus:ring-2 focus:ring-csk-yellow/70 focus:border-transparent"
                 />
@@ -471,6 +565,7 @@ const Checkout = () => {
                     value={formData.city}
                     onChange={handleChange}
                     required
+                    disabled={deliveryMode === 'auto'}
                     className="w-full px-4 py-2 border border-white/10 rounded-lg bg-[#0f0f14] text-white placeholder:text-gray-500 focus:ring-2 focus:ring-csk-yellow/70 focus:border-transparent"
                   />
                 </div>
@@ -482,6 +577,7 @@ const Checkout = () => {
                     value={formData.area}
                     onChange={handleChange}
                     required
+                    disabled={deliveryMode === 'auto'}
                     className="w-full px-4 py-2 border border-white/10 rounded-lg bg-[#0f0f14] text-white placeholder:text-gray-500 focus:ring-2 focus:ring-csk-yellow/70 focus:border-transparent"
                   />
                 </div>
@@ -496,6 +592,7 @@ const Checkout = () => {
                     value={formData.pincode}
                     onChange={handleChange}
                     required
+                    disabled={deliveryMode === 'auto'}
                     className="w-full px-4 py-2 border border-white/10 rounded-lg bg-[#0f0f14] text-white placeholder:text-gray-500 focus:ring-2 focus:ring-csk-yellow/70 focus:border-transparent"
                   />
                 </div>
@@ -512,7 +609,16 @@ const Checkout = () => {
                 </div>
               </div>
 
-              {/* Delivery is calculated automatically via Geolocation + Haversine on page load. */}
+              {deliveryMode === 'manual' && (
+                <button
+                  type="button"
+                  onClick={handleCalculateDelivery}
+                  disabled={calculatingDelivery || !formData.fullAddress}
+                  className="w-full bg-white/5 text-csk-yellow py-2 rounded-lg border border-csk-yellow/30 hover:bg-csk-yellow/10 transition text-sm font-medium disabled:opacity-50"
+                >
+                  {calculatingDelivery ? 'Calculating Distance...' : 'Check Distance'}
+                </button>
+              )}
 
               {distance && isDeliverable && (
                 <div className="bg-csk-yellow/10 border border-csk-yellow/30 text-csk-yellow px-4 py-2 rounded text-sm flex justify-between items-center animate-pulse-subtle">

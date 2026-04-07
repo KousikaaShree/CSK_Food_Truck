@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { FiPackage, FiFilter, FiDownload, FiCalendar, FiUser, FiSearch, FiChevronDown, FiChevronRight, FiFileText } from 'react-icons/fi';
+import { FiPackage, FiFilter, FiDownload, FiCalendar, FiUser, FiSearch, FiChevronDown, FiChevronRight, FiFileText, FiX } from 'react-icons/fi';
 import API_URL from '../../config';
 import moment from 'moment';
 
@@ -26,6 +26,10 @@ const AdminOrders = () => {
   const [expandedYears, setExpandedYears] = useState({});
   const [expandedMonths, setExpandedMonths] = useState({});
   const [expandedDays, setExpandedDays] = useState({});
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [orderDetails, setOrderDetails] = useState(null);
+  const [orderDetailsLoading, setOrderDetailsLoading] = useState(false);
+  const [orderDetailsError, setOrderDetailsError] = useState('');
 
   useEffect(() => {
     if (viewMode === 'list') {
@@ -163,6 +167,30 @@ const AdminOrders = () => {
   const toggleMonth = (year, month) => setExpandedMonths(v => ({ ...v, [`${year}-${month}`]: !v[`${year}-${month}`] }));
   const toggleDay = (year, month, day) => setExpandedDays(v => ({ ...v, [`${year}-${month}-${day}`]: !v[`${year}-${month}-${day}`] }));
 
+  const openOrderDetailsModal = async (orderMongoId) => {
+    setSelectedOrderId(orderMongoId);
+    setOrderDetails(null);
+    setOrderDetailsError('');
+    setOrderDetailsLoading(true);
+    try {
+      const res = await axios.get(`${API_URL}/api/admin/orders/${orderMongoId}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}` }
+      });
+      setOrderDetails(res.data);
+    } catch (error) {
+      setOrderDetailsError(error.response?.data?.message || 'Failed to load order details.');
+    } finally {
+      setOrderDetailsLoading(false);
+    }
+  };
+
+  const closeOrderDetailsModal = () => {
+    setSelectedOrderId(null);
+    setOrderDetails(null);
+    setOrderDetailsError('');
+    setOrderDetailsLoading(false);
+  };
+
   return (
     <div className="min-h-screen bg-[#0b0b0e] text-white">
       <nav className="border-b border-white/5 bg-[#0d0d10]/95 backdrop-blur sticky top-0 z-30">
@@ -250,7 +278,16 @@ const AdminOrders = () => {
                   <tbody className="divide-y divide-white/5">
                     {orders.map(order => (
                       <tr key={order._id} className="hover:bg-white/[0.02] transition group">
-                        <td className="px-6 py-4 font-mono text-csk-yellow text-sm">{order.orderId}</td>
+                        <td className="px-6 py-4 font-mono text-csk-yellow text-sm">
+                          <button
+                            type="button"
+                            onClick={() => openOrderDetailsModal(order._id)}
+                            className="hover:underline underline-offset-4"
+                            title="View order details"
+                          >
+                            {order.orderId}
+                          </button>
+                        </td>
                         <td className="px-6 py-4">
                            <div className="text-sm font-medium">{order.address?.name || order.user?.name}</div>
                            <div className="text-xs text-gray-500">{order.address?.email || order.user?.email}</div>
@@ -349,7 +386,14 @@ const AdminOrders = () => {
                                           {dayOrders.map(order => (
                                             <div key={order._id} className="flex justify-between items-center p-3 bg-white/[0.03] rounded-lg hover:bg-white/[0.05] transition group">
                                                <div>
-                                                  <div className="text-sm font-bold text-white group-hover:text-csk-yellow transition">{order.orderId}</div>
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => openOrderDetailsModal(order._id)}
+                                                    className="text-sm font-bold text-white group-hover:text-csk-yellow transition hover:underline underline-offset-4"
+                                                    title="View order details"
+                                                  >
+                                                    {order.orderId}
+                                                  </button>
                                                   <div className="text-xs text-gray-500">{order.address?.name || order.user?.name} • ₹{order.total.toFixed(2)}</div>
                                                </div>
                                                <button 
@@ -376,6 +420,108 @@ const AdminOrders = () => {
           </div>
         )}
       </div>
+
+      {selectedOrderId && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-[2px] p-4 flex items-center justify-center"
+          onClick={closeOrderDetailsModal}
+        >
+          <div
+            className="w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-[#14151a] border border-white/10 rounded-2xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 z-10 bg-[#14151a] border-b border-white/10 px-5 py-4 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-csk-yellow">Order Details</h3>
+              <button
+                type="button"
+                onClick={closeOrderDetailsModal}
+                className="p-2 rounded-lg hover:bg-white/5 transition"
+                aria-label="Close"
+              >
+                <FiX />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-5">
+              {orderDetailsLoading && (
+                <div className="text-sm text-gray-300">Loading order details...</div>
+              )}
+
+              {orderDetailsError && (
+                <div className="text-sm text-red-400">{orderDetailsError}</div>
+              )}
+
+              {!orderDetailsLoading && !orderDetailsError && orderDetails && (
+                <>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-[#0f0f14] rounded-xl p-4 border border-white/5">
+                      <h4 className="font-semibold mb-2 text-gray-200">Customer Details</h4>
+                      <p className="text-sm text-gray-300">Name: {orderDetails.address?.name || orderDetails.user?.name || 'N/A'}</p>
+                      <p className="text-sm text-gray-300">Phone: {orderDetails.address?.mobile || orderDetails.user?.mobile || 'N/A'}</p>
+                      <p className="text-sm text-gray-300">Address: {[orderDetails.address?.fullAddress, orderDetails.address?.area, orderDetails.address?.city, orderDetails.address?.pincode].filter(Boolean).join(', ') || 'N/A'}</p>
+                    </div>
+
+                    <div className="bg-[#0f0f14] rounded-xl p-4 border border-white/5">
+                      <h4 className="font-semibold mb-2 text-gray-200">Order Details</h4>
+                      <p className="text-sm text-gray-300">Order ID: {orderDetails.orderId}</p>
+                      <p className="text-sm text-gray-300">Date & Time: {moment(orderDetails.createdAt).format('DD MMM YYYY, hh:mm A')}</p>
+                      <p className="text-sm text-gray-300">Payment: {(orderDetails.paymentMethod || 'N/A').toUpperCase()}</p>
+                      <p className="text-sm text-gray-300">Total: ₹{Number(orderDetails.total || 0).toFixed(2)}</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-[#0f0f14] rounded-xl p-4 border border-white/5">
+                    <h4 className="font-semibold mb-3 text-gray-200">Menu Items</h4>
+                    <div className="space-y-3">
+                      {(orderDetails.items || []).map((item, idx) => {
+                        const addOns = item?.customizationData?.addOns || [];
+                        const hasCustomization = addOns.length > 0;
+                        return (
+                          <div key={idx} className="rounded-xl border border-white/10 p-3 bg-white/[0.02]">
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-sm">
+                              <div className="text-gray-100 font-medium">{item.name || item.food?.name || 'Item'}</div>
+                              <div className="text-gray-300 md:text-right">Qty: {Number(item.quantity || 0)}</div>
+                              <div className="text-gray-300 md:text-right">Price: ₹{Number(item.price || 0).toFixed(2)}</div>
+                              <div className="text-gray-100 md:text-right font-semibold">
+                                Subtotal: ₹{(Number(item.quantity || 0) * Number(item.price || 0)).toFixed(2)}
+                              </div>
+                            </div>
+
+                            <div className="mt-2 pl-2 border-l-2 border-csk-yellow/40">
+                              <p className="text-xs uppercase tracking-wider text-gray-400 mb-1">Customization</p>
+                              {hasCustomization ? (
+                                <ul className="space-y-1">
+                                  {addOns.map((addon, addonIdx) => (
+                                    <li key={addonIdx} className="text-xs text-gray-300">
+                                      - {addon.name} {Number(addon.price || 0) > 0 ? `(₹${Number(addon.price || 0).toFixed(2)})` : ''}
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="text-xs text-gray-500">No customization</p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="bg-[#0f0f14] rounded-xl p-4 border border-white/5">
+                    <h4 className="font-semibold mb-2 text-gray-200">Delivery Details</h4>
+                    <p className="text-sm text-gray-300">
+                      Distance: {Number.isFinite(Number(orderDetails.deliveryDistanceKm))
+                        ? `${Number(orderDetails.deliveryDistanceKm).toFixed(2)} km`
+                        : 'N/A'}
+                    </p>
+                    <p className="text-sm text-gray-300 font-semibold">Delivery Charge: ₹{Number(orderDetails.deliveryFee || 0).toFixed(2)}</p>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

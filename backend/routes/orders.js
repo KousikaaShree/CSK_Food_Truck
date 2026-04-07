@@ -8,9 +8,9 @@ const { getCustomizationsForCategory } = require('../utils/customizations');
 const { sendOrderConfirmationEmail } = require('../utils/sendEmail');
 const {
   getDeliveryChargeForDistanceKm,
-  calculateFinalTotal,
-  haversineDistanceKm
+  calculateFinalTotal
 } = require('../utils/pricing');
+const { geocodeAddressToLatLng, distanceMatrixMeters } = require('../utils/googleMaps');
 
 // Shop fixed coordinates (can be overridden via env for different deployments).
 const SHOP_LAT = process.env.SHOP_LAT || 10.0104;
@@ -100,13 +100,15 @@ router.post('/create', authenticateUser, async (req, res) => {
       razorpayPaymentId,
       razorpaySignature,
       cartItems,
-      customerLocation,
-      distanceValue
+      customerLocation
     } = req.body;
 
-    let distanceKm;
+    // Re-validate delivery on backend using Google road distance.
+    // Preferred: customerLocation lat/lng from browser.
+    // Fallback: geocode the order address and compute distance.
+    let destLat;
+    let destLng;
 
-    // Preferred: compute from geolocation coordinates (Haversine).
     const customerLat = Number(customerLocation?.latitude);
     const customerLng = Number(customerLocation?.longitude);
     const hasValidCoords =
@@ -118,20 +120,25 @@ router.post('/create', authenticateUser, async (req, res) => {
       customerLng <= 180;
 
     if (hasValidCoords) {
-      distanceKm = haversineDistanceKm(customerLat, customerLng, SHOP_LAT, SHOP_LNG);
-    } else if (distanceValue !== undefined && distanceValue !== null) {
-      // Fallback: frontend provided distance (meters) from backend address-based calculation.
-      const distanceMeters = Number(distanceValue);
-      distanceKm = distanceMeters / 1000;
+      destLat = customerLat;
+      destLng = customerLng;
+    } else {
+      const addressText = [address?.fullAddress, address?.area, address?.city, address?.pincode].filter(Boolean).join(' ');
+      if (!addressText || addressText.trim().length < 6) {
+        return res.status(400).json({ message: 'Valid delivery address is required.' });
+      }
+      const coords = await geocodeAddressToLatLng(addressText);
+      destLat = coords.lat;
+      destLng = coords.lng;
     }
 
-    if (!Number.isFinite(distanceKm)) {
-      return res.status(400).json({ message: 'Customer location (coords) or distanceValue is required.' });
-    }
+    const { distanceValue: roadMeters } = await distanceMatrixMeters(SHOP_LAT, SHOP_LNG, destLat, destLng);
+    const distanceKm = roadMeters / 1000;
+    const roundedDistanceKm = Number(distanceKm.toFixed(2));
 
     const { allowed: isDeliverable, deliveryCharge: finalDeliveryFee } = getDeliveryChargeForDistanceKm(distanceKm);
     if (!isDeliverable) {
-      return res.status(400).json({ message: 'Delivery is not available in your area (over 15km).' });
+      return res.status(400).json({ message: 'Delivery is not available in your area.' });
     }
 
     console.log('Creating order with delivery:', {
@@ -257,6 +264,7 @@ router.post('/create', authenticateUser, async (req, res) => {
         razorpaySignature: paymentMethod === 'razorpay' ? razorpaySignature : undefined,
         subtotal: calculatedSubtotal,
         deliveryFee: finalDeliveryFee,
+        deliveryDistanceKm: roundedDistanceKm,
         total,
         estimatedDeliveryTime: new Date(Date.now() + 45 * 60 * 1000)
       });
@@ -339,6 +347,7 @@ router.post('/create', authenticateUser, async (req, res) => {
       razorpaySignature: paymentMethod === 'razorpay' ? razorpaySignature : undefined,
       subtotal,
       deliveryFee: finalDeliveryFee,
+      deliveryDistanceKm: roundedDistanceKm,
       total,
       estimatedDeliveryTime: new Date(Date.now() + 45 * 60 * 1000) // 45 minutes
     });

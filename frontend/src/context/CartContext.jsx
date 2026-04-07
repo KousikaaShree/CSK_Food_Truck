@@ -4,6 +4,59 @@ import { useAuth } from './AuthContext';
 import { useMenu } from './MenuContext';
 import API_URL from '../config';
 
+const CART_STORAGE_KEY = 'csk_cart';
+
+const getSafeNumber = (value, fallback = 0) => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+};
+
+const normalizeCart = (raw) => {
+  if (!raw || !Array.isArray(raw.items)) return { items: [], total: 0 };
+
+  const items = raw.items
+    .filter((item) => item && item.food)
+    .map((item) => {
+      const quantity = Math.max(1, getSafeNumber(item.quantity, 1));
+      const price = getSafeNumber(item.price, 0);
+      return {
+        ...item,
+        quantity,
+        price
+      };
+    });
+
+  const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  return { items, total };
+};
+
+const loadCartFromStorage = () => {
+  try {
+    const raw = localStorage.getItem(CART_STORAGE_KEY);
+    if (!raw) return { items: [], total: 0 };
+    return normalizeCart(JSON.parse(raw));
+  } catch (e) {
+    console.error('Failed to load cart from localStorage:', e);
+    localStorage.removeItem(CART_STORAGE_KEY);
+    return { items: [], total: 0 };
+  }
+};
+
+const saveCartToStorage = (cart) => {
+  try {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+  } catch (e) {
+    console.error('Failed to save cart to localStorage:', e);
+  }
+};
+
+const clearCartFromStorage = () => {
+  try {
+    localStorage.removeItem(CART_STORAGE_KEY);
+  } catch (e) {
+    console.error('Failed to clear cart from localStorage:', e);
+  }
+};
 
 const CartContext = createContext();
 
@@ -18,25 +71,22 @@ export const useCart = () => {
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState({ items: [], total: 0 });
   const [loading, setLoading] = useState(false);
+  const [isCartHydrated, setIsCartHydrated] = useState(false);
   const { user } = useAuth();
   const { items: menuItems } = useMenu();
 
   // Load cart from local storage on mount
   useEffect(() => {
-    const savedCart = localStorage.getItem('csk_cart');
-    if (savedCart) {
-      try {
-        setCart(JSON.parse(savedCart));
-      } catch (e) {
-        console.error("Failed to parse cart", e);
-      }
-    }
+    const storedCart = loadCartFromStorage();
+    setCart(storedCart);
+    setIsCartHydrated(true);
   }, []);
 
   // Save cart to local storage whenever it changes
   useEffect(() => {
-    localStorage.setItem('csk_cart', JSON.stringify(cart));
-  }, [cart]);
+    if (!isCartHydrated) return;
+    saveCartToStorage(cart);
+  }, [cart, isCartHydrated]);
 
   // Helper to generate a unique ID for a cart item based on food ID and addons
   const generateCartItemId = (foodId, addOns = []) => {
@@ -161,6 +211,7 @@ export const CartProvider = ({ children }) => {
       }
     }
     setCart({ items: [], total: 0 });
+    clearCartFromStorage();
     return { success: true };
   };
 
