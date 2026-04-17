@@ -134,6 +134,33 @@ const Menu = () => {
           </p>
         </div>
 
+        {/* Delivery Animation Strip */}
+        <div className="mb-8 rounded-2xl border border-white/10 bg-[#14151a] p-4 md:p-5 shadow-soft">
+          <div className="flex items-center gap-4">
+            <div className="relative flex-1 overflow-hidden rounded-xl bg-[#0f0f14] ring-1 ring-white/5 h-16 md:h-20">
+              <div
+                className="absolute top-1/2 -translate-y-1/2 flex items-center gap-3 md:gap-4"
+                style={{ animation: 'deliveryRideAcross 15s linear infinite' }}
+              >
+                <span className="whitespace-nowrap text-sm md:text-lg font-semibold text-csk-yellow tracking-wide">
+                  Delivery available within 15 km from the shop
+                </span>
+                <span
+                  className="text-4xl md:text-5xl drop-shadow-[0_6px_12px_rgba(0,0,0,0.45)]"
+                  style={{ animation: 'deliveryScooterBounce 1100ms ease-in-out infinite' }}
+                  aria-hidden="true"
+                >
+                  🛵
+                </span>
+              </div>
+            </div>
+
+            <div className="shrink-0 px-4 md:px-5 py-2.5 rounded-xl bg-csk-yellow/10 border border-csk-yellow/40 text-csk-yellow text-xs md:text-sm font-semibold text-center">
+              Place an order to see delivery radius!
+            </div>
+          </div>
+        </div>
+
         {/* Search Bar */}
         <div className="mb-6">
           <div className="relative">
@@ -250,6 +277,30 @@ const Menu = () => {
           onAddToCart={handleAddToCart}
         />
       )}
+
+      <style>{`
+        @keyframes deliveryRideAcross {
+          0% {
+            transform: translate(-105%, -50%);
+            opacity: 0;
+          }
+          10% {
+            opacity: 1;
+          }
+          88% {
+            opacity: 1;
+          }
+          100% {
+            transform: translate(115vw, -50%);
+            opacity: 0;
+          }
+        }
+
+        @keyframes deliveryScooterBounce {
+          0%, 100% { transform: scaleX(-1) translateY(0); }
+          50% { transform: scaleX(-1) translateY(-2px); }
+        }
+      `}</style>
     </div>
   );
 };

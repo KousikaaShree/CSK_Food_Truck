@@ -472,49 +472,34 @@ const AdminOrders = () => {
 
                   <div className="bg-[#0f0f14] rounded-xl p-4 border border-white/5">
                     <h4 className="font-semibold mb-3 text-gray-200">Menu Items</h4>
-                    <div className="space-y-3">
-                      {(orderDetails.items || []).map((item, idx) => {
-                        const addOns = item?.customizationData?.addOns || [];
-                        const hasCustomization = addOns.length > 0;
-                        return (
-                          <div key={idx} className="rounded-xl border border-white/10 p-3 bg-white/[0.02]">
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-sm">
-                              <div className="text-gray-100 font-medium">{item.name || item.food?.name || 'Item'}</div>
-                              <div className="text-gray-300 md:text-right">Qty: {Number(item.quantity || 0)}</div>
-                              <div className="text-gray-300 md:text-right">Price: ₹{Number(item.price || 0).toFixed(2)}</div>
-                              <div className="text-gray-100 md:text-right font-semibold">
-                                Subtotal: ₹{(Number(item.quantity || 0) * Number(item.price || 0)).toFixed(2)}
-                              </div>
-                            </div>
-
-                            <div className="mt-2 pl-2 border-l-2 border-csk-yellow/40">
-                              <p className="text-xs uppercase tracking-wider text-gray-400 mb-1">Customization</p>
-                              {hasCustomization ? (
-                                <ul className="space-y-1">
-                                  {addOns.map((addon, addonIdx) => (
-                                    <li key={addonIdx} className="text-xs text-gray-300">
-                                      - {addon.name} {Number(addon.price || 0) > 0 ? `(₹${Number(addon.price || 0).toFixed(2)})` : ''}
-                                    </li>
-                                  ))}
-                                </ul>
-                              ) : (
-                                <p className="text-xs text-gray-500">No customization</p>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
+                    <div className="overflow-x-auto">
+                      <table className="w-full min-w-[540px] text-sm">
+                        <thead className="text-gray-400">
+                          <tr className="border-b border-white/10">
+                            <th className="text-left py-2">Item</th>
+                            <th className="text-right py-2">Qty</th>
+                            <th className="text-right py-2">Price</th>
+                            <th className="text-right py-2">Subtotal</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(orderDetails.items || []).map((item, idx) => (
+                            <tr key={idx} className="border-b border-white/5">
+                              <td className="py-2 text-gray-200">{item.name || item.food?.name || 'Item'}</td>
+                              <td className="py-2 text-right text-gray-300">{Number(item.quantity || 0)}</td>
+                              <td className="py-2 text-right text-gray-300">₹{Number(item.price || 0).toFixed(2)}</td>
+                              <td className="py-2 text-right text-gray-100">₹{(Number(item.quantity || 0) * Number(item.price || 0)).toFixed(2)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
 
                   <div className="bg-[#0f0f14] rounded-xl p-4 border border-white/5">
                     <h4 className="font-semibold mb-2 text-gray-200">Delivery Details</h4>
-                    <p className="text-sm text-gray-300">
-                      Distance: {Number.isFinite(Number(orderDetails.deliveryDistanceKm))
-                        ? `${Number(orderDetails.deliveryDistanceKm).toFixed(2)} km`
-                        : 'N/A'}
-                    </p>
-                    <p className="text-sm text-gray-300 font-semibold">Delivery Charge: ₹{Number(orderDetails.deliveryFee || 0).toFixed(2)}</p>
+                    <p className="text-sm text-gray-300">Distance: {orderDetails.distance ? orderDetails.distance : 'N/A'}</p>
+                    <p className="text-sm text-gray-300">Delivery Charge: ₹{Number(orderDetails.deliveryFee || 0).toFixed(2)}</p>
                   </div>
                 </>
               )}

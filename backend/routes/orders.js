@@ -134,7 +134,6 @@ router.post('/create', authenticateUser, async (req, res) => {
 
     const { distanceValue: roadMeters } = await distanceMatrixMeters(SHOP_LAT, SHOP_LNG, destLat, destLng);
     const distanceKm = roadMeters / 1000;
-    const roundedDistanceKm = Number(distanceKm.toFixed(2));
 
     const { allowed: isDeliverable, deliveryCharge: finalDeliveryFee } = getDeliveryChargeForDistanceKm(distanceKm);
     if (!isDeliverable) {
@@ -264,7 +263,6 @@ router.post('/create', authenticateUser, async (req, res) => {
         razorpaySignature: paymentMethod === 'razorpay' ? razorpaySignature : undefined,
         subtotal: calculatedSubtotal,
         deliveryFee: finalDeliveryFee,
-        deliveryDistanceKm: roundedDistanceKm,
         total,
         estimatedDeliveryTime: new Date(Date.now() + 45 * 60 * 1000)
       });
@@ -347,7 +345,6 @@ router.post('/create', authenticateUser, async (req, res) => {
       razorpaySignature: paymentMethod === 'razorpay' ? razorpaySignature : undefined,
       subtotal,
       deliveryFee: finalDeliveryFee,
-      deliveryDistanceKm: roundedDistanceKm,
       total,
       estimatedDeliveryTime: new Date(Date.now() + 45 * 60 * 1000) // 45 minutes
     });
