@@ -43,6 +43,20 @@ const userSchema = new mongoose.Schema({
   role: {
     type: String,
     default: 'user'
+  },
+  otp: {
+    codeHash: String,
+    expiresAt: Date,
+    attempts: {
+      type: Number,
+      default: 0
+    },
+    resendCount: {
+      type: Number,
+      default: 0
+    },
+    lastSentAt: Date,
+    purpose: String
   }
 }, {
   timestamps: true

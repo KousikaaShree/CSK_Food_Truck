@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { GoogleLogin } from '@react-oauth/google';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -11,7 +12,7 @@ const Signup = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signup } = useAuth();
+  const { signup, googleLoginUser } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -31,11 +32,45 @@ const Signup = () => {
     );
     
     if (result.success) {
-      navigate('/');
+      if (result.otpRequired) {
+        navigate('/otp-verification', {
+          state: {
+            email: result.email,
+            maskedEmail: result.maskedEmail,
+            purpose: result.purpose,
+            from: 'signup'
+          }
+        });
+      } else {
+        navigate('/');
+      }
     } else {
       setError(result.message);
     }
     
+    setLoading(false);
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError('');
+    setLoading(true);
+    const result = await googleLoginUser(credentialResponse.credential);
+    if (result.success) {
+      if (result.otpRequired) {
+        navigate('/otp-verification', {
+          state: {
+            email: result.email,
+            maskedEmail: result.maskedEmail,
+            purpose: result.purpose,
+            from: 'signup'
+          }
+        });
+      } else {
+        navigate(result.role === 'admin' ? '/admin/dashboard' : '/dashboard');
+      }
+    } else {
+      setError(result.message);
+    }
     setLoading(false);
   };
 
@@ -110,6 +145,23 @@ const Signup = () => {
             {loading ? 'Creating account...' : 'Sign Up'}
           </button>
         </form>
+
+        <div className="my-6 flex items-center">
+          <div className="flex-grow border-t border-white/10"></div>
+          <span className="mx-4 text-gray-400 text-sm">OR</span>
+          <div className="flex-grow border-t border-white/10"></div>
+        </div>
+
+        <div className="flex justify-center">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => setError('Google Signup Failed')}
+            useOneTap
+            theme="filled_black"
+            shape="pill"
+            text="signup_with"
+          />
+        </div>
 
         <p className="mt-4 text-center text-gray-300">
           Already have an account?{' '}

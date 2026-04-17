@@ -2,10 +2,12 @@ const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const User = require('../models/User');
 const { authenticateUser } = require('../middleware/auth');
 // Admin model is now deprecated in favor of User with role: 'admin'
 const { OAuth2Client } = require('google-auth-library');
+const { sendOtpEmail } = require('../utils/sendEmail');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -18,6 +20,56 @@ const ADMIN_EMAILS = [
 // Generate JWT Token
 const generateToken = (userId, role = 'user') => {
   return jwt.sign({ id: userId, role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+};
+
+const OTP_EXPIRES_MS = 5 * 60 * 1000;
+const OTP_MAX_ATTEMPTS = 5;
+const OTP_MAX_RESENDS = 3;
+const OTP_RESEND_COOLDOWN_MS = 30 * 1000;
+
+const hashOtp = (email, otp) => {
+  const salt = process.env.JWT_SECRET || 'csk-otp-salt';
+  return crypto.createHash('sha256').update(`${email}:${otp}:${salt}`).digest('hex');
+};
+
+const generateOtpCode = () => String(Math.floor(100000 + Math.random() * 900000));
+
+const maskEmail = (email) => {
+  const [name, domain] = email.split('@');
+  if (!name || !domain) return email;
+  const prefix = name.slice(0, 2);
+  return `${prefix}${'*'.repeat(Math.max(1, name.length - 2))}@${domain}`;
+};
+
+const issueOtpForUser = async (user, purpose) => {
+  const now = Date.now();
+  const lastSentAt = user.otp?.lastSentAt ? new Date(user.otp.lastSentAt).getTime() : 0;
+  if (lastSentAt && now - lastSentAt < OTP_RESEND_COOLDOWN_MS) {
+    const waitSeconds = Math.ceil((OTP_RESEND_COOLDOWN_MS - (now - lastSentAt)) / 1000);
+    return { ok: false, message: `Please wait ${waitSeconds}s before requesting OTP again.` };
+  }
+
+  const resendCount = Number(user.otp?.resendCount || 0);
+  if (resendCount >= OTP_MAX_RESENDS) {
+    return { ok: false, message: 'OTP request limit reached. Please try again later.' };
+  }
+
+  const otp = generateOtpCode();
+  user.otp = {
+    codeHash: hashOtp(user.email, otp),
+    expiresAt: new Date(now + OTP_EXPIRES_MS),
+    attempts: 0,
+    resendCount: resendCount + 1,
+    lastSentAt: new Date(now),
+    purpose
+  };
+  await user.save();
+
+  const sent = await sendOtpEmail({ email: user.email, otp, purpose });
+  if (!sent) {
+    return { ok: false, message: 'Failed to send OTP email. Please try again.' };
+  }
+  return { ok: true };
 };
 
 // User Signup
@@ -45,16 +97,17 @@ router.post('/signup', [
     user = new User({ name, email, mobile, password });
     await user.save();
 
-    const token = generateToken(user._id);
-    res.status(201).json({
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        mobile: user.mobile,
-        role: user.role
-      }
+    const otpResult = await issueOtpForUser(user, 'signup');
+    if (!otpResult.ok) {
+      return res.status(429).json({ message: otpResult.message });
+    }
+
+    res.status(200).json({
+      otpRequired: true,
+      purpose: 'signup',
+      email: user.email,
+      maskedEmail: maskEmail(user.email),
+      message: 'OTP sent to your email'
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -95,22 +148,18 @@ router.post('/login', [
       await user.save();
     }
 
-    const token = generateToken(user._id, user.role);
+    const otpResult = await issueOtpForUser(user, 'login');
+    if (!otpResult.ok) {
+      return res.status(429).json({ message: otpResult.message });
+    }
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "None"
-    });
-    res.json({
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        mobile: user.mobile,
-        role: user.role
-      }
+    res.status(200).json({
+      otpRequired: true,
+      purpose: 'login',
+      email: user.email,
+      maskedEmail: maskEmail(user.email),
+      role: user.role,
+      message: 'OTP sent to your email'
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -226,6 +275,67 @@ router.post('/google/user', async (req, res) => {
       await user.save();
     }
 
+    const otpResult = await issueOtpForUser(user, 'login');
+    if (!otpResult.ok) {
+      return res.status(429).json({ message: otpResult.message });
+    }
+
+    res.status(200).json({
+      otpRequired: true,
+      purpose: 'login',
+      email: user.email,
+      maskedEmail: maskEmail(user.email),
+      role: user.role,
+      picture,
+      message: 'OTP sent to your email'
+    });
+  } catch (error) {
+    console.error('Google Auth Error:', error);
+    res.status(401).json({ message: 'Invalid Google Token', error: error.message });
+  }
+});
+
+// Verify OTP (for login/signup)
+router.post('/verify-otp', [
+  body('email').isEmail().withMessage('Valid email is required'),
+  body('otp').isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits'),
+  body('purpose').isIn(['login', 'signup']).withMessage('Invalid OTP purpose')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { email, otp, purpose } = req.body;
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user || !user.otp || !user.otp.codeHash) {
+      return res.status(400).json({ message: 'OTP not found. Please request again.' });
+    }
+
+    if (user.otp.purpose !== purpose) {
+      return res.status(400).json({ message: 'OTP purpose mismatch. Please request a new OTP.' });
+    }
+
+    if (!user.otp.expiresAt || new Date(user.otp.expiresAt).getTime() < Date.now()) {
+      return res.status(400).json({ message: 'OTP expired. Please request a new OTP.' });
+    }
+
+    if ((user.otp.attempts || 0) >= OTP_MAX_ATTEMPTS) {
+      return res.status(429).json({ message: 'Maximum OTP attempts reached. Please resend OTP.' });
+    }
+
+    const otpHash = hashOtp(user.email, otp);
+    if (otpHash !== user.otp.codeHash) {
+      user.otp.attempts = (user.otp.attempts || 0) + 1;
+      await user.save();
+      return res.status(400).json({ message: 'Invalid OTP. Please try again.' });
+    }
+
+    // OTP valid: clear OTP state and issue auth token
+    user.otp = undefined;
+    await user.save();
+
     const token = generateToken(user._id, user.role);
     res.json({
       token,
@@ -234,13 +344,43 @@ router.post('/google/user', async (req, res) => {
         name: user.name,
         email: user.email,
         mobile: user.mobile,
-        role: user.role,
-        picture
+        role: user.role
       }
     });
   } catch (error) {
-    console.error('Google Auth Error:', error);
-    res.status(401).json({ message: 'Invalid Google Token', error: error.message });
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Resend OTP
+router.post('/resend-otp', [
+  body('email').isEmail().withMessage('Valid email is required'),
+  body('purpose').isIn(['login', 'signup']).withMessage('Invalid OTP purpose')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { email, purpose } = req.body;
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    const otpResult = await issueOtpForUser(user, purpose);
+    if (!otpResult.ok) {
+      return res.status(429).json({ message: otpResult.message });
+    }
+
+    res.json({
+      success: true,
+      maskedEmail: maskEmail(user.email),
+      message: 'OTP resent successfully'
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 

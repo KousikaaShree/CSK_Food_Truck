@@ -9,6 +9,7 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import OtpVerification from './pages/OtpVerification';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import OrderConfirmation from './pages/OrderConfirmation';
@@ -34,6 +35,7 @@ function App() {
               <Route path="/contact" element={<><Navbar /><Contact /></>} />
               <Route path="/login" element={<><Navbar /><Login /></>} />
               <Route path="/signup" element={<><Navbar /><Signup /></>} />
+              <Route path="/otp-verification" element={<OtpVerification />} />
 
               {/* User Protected Routes */}
               <Route path="/cart" element={<PrivateRoute><><Navbar /><Cart /></></PrivateRoute>} />

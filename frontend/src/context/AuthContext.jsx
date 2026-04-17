@@ -46,6 +46,16 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const res = await axios.post(`${API_URL}/api/auth/login`, { email, password });
+      if (res.data?.otpRequired) {
+        return {
+          success: true,
+          otpRequired: true,
+          purpose: res.data.purpose,
+          email: res.data.email,
+          maskedEmail: res.data.maskedEmail,
+          role: res.data.role
+        };
+      }
       localStorage.setItem('token', res.data.token);
       setUser(res.data.user);
       if (res.data.user.role === 'admin') {
@@ -61,6 +71,15 @@ export const AuthProvider = ({ children }) => {
   const signup = async (name, email, mobile, password) => {
     try {
       const res = await axios.post(`${API_URL}/api/auth/signup`, { name, email, mobile, password });
+      if (res.data?.otpRequired) {
+        return {
+          success: true,
+          otpRequired: true,
+          purpose: res.data.purpose,
+          email: res.data.email,
+          maskedEmail: res.data.maskedEmail
+        };
+      }
       localStorage.setItem('token', res.data.token);
       setUser(res.data.user);
       return { success: true };
@@ -100,6 +119,16 @@ export const AuthProvider = ({ children }) => {
   const googleLoginUser = async (credential) => {
     try {
       const res = await axios.post(`${API_URL}/api/auth/google/user`, { idToken: credential });
+      if (res.data?.otpRequired) {
+        return {
+          success: true,
+          otpRequired: true,
+          purpose: res.data.purpose,
+          email: res.data.email,
+          maskedEmail: res.data.maskedEmail,
+          role: res.data.role
+        };
+      }
       localStorage.setItem('token', res.data.token);
       setUser(res.data.user);
       if (res.data.user.role === 'admin') {
@@ -109,6 +138,30 @@ export const AuthProvider = ({ children }) => {
       return { success: true, role: res.data.user.role };
     } catch (error) {
       return { success: false, message: error.response?.data?.message || 'Google Login failed' };
+    }
+  };
+
+  const verifyOtp = async ({ email, otp, purpose }) => {
+    try {
+      const res = await axios.post(`${API_URL}/api/auth/verify-otp`, { email, otp, purpose });
+      localStorage.setItem('token', res.data.token);
+      setUser(res.data.user);
+      if (res.data.user.role === 'admin') {
+        localStorage.setItem('adminToken', res.data.token);
+        setAdmin(res.data.user);
+      }
+      return { success: true, role: res.data.user.role };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || 'OTP verification failed' };
+    }
+  };
+
+  const resendOtp = async ({ email, purpose }) => {
+    try {
+      const res = await axios.post(`${API_URL}/api/auth/resend-otp`, { email, purpose });
+      return { success: true, maskedEmail: res.data?.maskedEmail };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || 'Failed to resend OTP' };
     }
   };
 
@@ -142,6 +195,8 @@ export const AuthProvider = ({ children }) => {
     adminSignup,
     googleLoginUser,
     googleLoginAdmin,
+    verifyOtp,
+    resendOtp,
     logout,
     loading
   };

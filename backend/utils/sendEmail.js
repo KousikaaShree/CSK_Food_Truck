@@ -210,4 +210,53 @@ const sendFeedbackEmail = async (name, email, message) => {
   }
 };
 
-module.exports = { sendOrderConfirmationEmail, sendFeedbackEmail };
+const sendOtpEmail = async ({ email, otp, purpose = 'login' }) => {
+  try {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      console.warn('EMAIL_USER or EMAIL_PASS not set in environment. Skipping OTP email.');
+      return false;
+    }
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    const purposeText =
+      purpose === 'signup'
+        ? 'complete your signup'
+        : 'complete your login';
+
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 20px; background: #f7f7f7;">
+        <div style="background:#0b0b0e; color:#fff; padding:18px; border-radius:10px 10px 0 0; text-align:center;">
+          <h2 style="margin:0; color:#FACC15;">CSK Food Truck</h2>
+        </div>
+        <div style="background:#fff; padding:20px; border-radius:0 0 10px 10px;">
+          <p style="margin-top:0;">Use this OTP to ${purposeText}:</p>
+          <div style="font-size:30px; letter-spacing:8px; font-weight:700; color:#111; text-align:center; margin:16px 0;">
+            ${otp}
+          </div>
+          <p style="margin:0; color:#555;">This OTP expires in 5 minutes. Do not share it with anyone.</p>
+        </div>
+      </div>
+    `;
+
+    await transporter.sendMail({
+      from: `"CSK Food Truck" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: 'Your OTP Code - CSK Food Truck',
+      html: htmlContent
+    });
+
+    return true;
+  } catch (error) {
+    console.error('Error sending OTP email:', error);
+    return false;
+  }
+};
+
+module.exports = { sendOrderConfirmationEmail, sendFeedbackEmail, sendOtpEmail };

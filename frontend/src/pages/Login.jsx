@@ -22,6 +22,18 @@ const Login = () => {
     const result = await login(formData.email, formData.password);
 
     if (result.success) {
+      if (result.otpRequired) {
+        navigate('/otp-verification', {
+          state: {
+            email: result.email,
+            maskedEmail: result.maskedEmail,
+            purpose: result.purpose,
+            from: 'login'
+          }
+        });
+        setLoading(false);
+        return;
+      }
       navigate(result.role === 'admin' ? '/admin/dashboard' : '/dashboard');
     } else {
       setError(result.message);
@@ -35,6 +47,18 @@ const Login = () => {
     setLoading(true);
     const result = await googleLoginUser(credentialResponse.credential);
     if (result.success) {
+      if (result.otpRequired) {
+        navigate('/otp-verification', {
+          state: {
+            email: result.email,
+            maskedEmail: result.maskedEmail,
+            purpose: result.purpose,
+            from: 'login'
+          }
+        });
+        setLoading(false);
+        return;
+      }
       navigate(result.role === 'admin' ? '/admin/dashboard' : '/dashboard');
     } else {
       setError(result.message);
