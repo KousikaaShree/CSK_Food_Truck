@@ -33,15 +33,20 @@ const About = () => {
             </div>
           </div>
 
-          <div className="relative">
+          <div className="relative w-full max-w-[520px] mx-auto lg:mx-0">
             <div className="absolute -inset-3 bg-csk-yellow/15 blur-3xl rounded-[32px]" />
             <div className="relative bg-[#14151a] rounded-2xl shadow-soft ring-1 ring-white/10 overflow-hidden">
-              <img
-                src="https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=1400&q=70"
-                alt="Food preparation"
-                className="w-full h-[360px] object-cover"
-                loading="lazy"
-              />
+              <video
+                className="w-full h-[240px] sm:h-[300px] md:h-[340px] lg:h-[360px] object-cover"
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+                controls
+              >
+                <source src="/assets-koushi-demo/kebab.mp4" type="video/mp4" />
+              </video>
             </div>
           </div>
         </div>

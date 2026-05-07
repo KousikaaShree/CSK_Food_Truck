@@ -3,167 +3,76 @@ import { FiArrowRight } from 'react-icons/fi';
 import { useEffect, useRef } from 'react';
 
 const FoodJourney = () => {
-  const containerRef = useRef(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const observerOptions = {
-      threshold: 0.3,
-      rootMargin: '0px 0px -100px 0px'
-    };
-
-    const foodItems = document.querySelectorAll('.food-item');
-
-    const createFlourPath = (fromElement, toElement) => {
-      const fromRect = fromElement.querySelector('.plate-circle').getBoundingClientRect();
-      const toRect = toElement.querySelector('.plate-circle').getBoundingClientRect();
-
-      const container = containerRef.current;
-      if (!container) return;
-
-      const containerRect = container.getBoundingClientRect();
-
-      const fromY = fromRect.bottom - containerRect.top;
-      const toY = toRect.top - containerRect.top;
-      const distance = toY - fromY;
-
-      const particleCount = 15;
-
-      for (let i = 0; i < particleCount; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'flour-particle-path';
-
-        const size = Math.random() * 6 + 3;
-        particle.style.width = size + 'px';
-        particle.style.height = size + 'px';
-
-        const progress = i / particleCount;
-        const yPos = fromY + (distance * progress);
-
-        const xOffset = Math.sin(progress * Math.PI * 2) * 30;
-        const xPos = 50;
-
-        particle.style.position = 'absolute';
-        particle.style.top = yPos + 'px';
-        particle.style.left = `calc(${xPos}% + ${xOffset}px)`;
-        particle.style.animationDelay = (i * 0.05) + 's';
-
-        container.appendChild(particle);
-      }
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-
-          setTimeout(() => {
-            entry.target.classList.add('rotate-active');
-
-            const currentIndex = parseInt(entry.target.dataset.index);
-            if (currentIndex < foodItems.length - 1) {
-              createFlourPath(entry.target, foodItems[currentIndex + 1]);
-            }
-          }, 400);
-        }
-      });
-    }, observerOptions);
-
-    foodItems.forEach(item => observer.observe(item));
-
-    setTimeout(() => {
-      foodItems.forEach(item => {
-        const rect = item.getBoundingClientRect();
-        if (rect.top < window.innerHeight * 0.7) {
-          item.classList.add('visible');
-        }
-      });
-    }, 100);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, []);
-
   return (
-    <div className="journey-container" ref={containerRef}>
+    <div className="journey-container">
       {/* Food Item 1 - Left */}
-      <div className="food-item left" data-index="0">
-        <div className="plate-circle">
+      <div className="food-item left">
+        <div className="plate-circle scroll-reveal">
           <img
-            src="/appetizer.png"
-            alt="Appetizer"
+            src="/assets-koushi-demo/homeshawarma.jpg"
+            alt="Shawarma"
             className="plate-image"
+            loading="lazy"
+            decoding="async"
           />
         </div>
         <div className="food-content">
-          <h2 className="food-title">Appetizer</h2>
-          <p className="food-description">Start with our fresh baked bread with an egg and basil on top</p>
-        </div>
-        <div className="flour-decoration">
-          <div className="flour-dot" style={{ width: '4px', height: '4px', top: '20px', left: '-30px' }}></div>
-          <div className="flour-dot" style={{ width: '6px', height: '6px', top: '40px', left: '-40px' }}></div>
-          <div className="flour-dot" style={{ width: '3px', height: '3px', top: '60px', left: '-25px' }}></div>
+          <h2 className="food-title">Shawarma</h2>
+          <p className="food-description">A flavorful wrap filled with thinly sliced, spiced meat, fresh veggies, and creamy sauces.</p>
         </div>
       </div>
 
       {/* Food Item 2 - Right */}
-      <div className="food-item right" data-index="1">
-        <div className="plate-circle">
+      <div className="food-item right">
+        <div className="plate-circle scroll-reveal">
           <img
-            src="/steak.png"
-            alt="Main Dish"
+            src="/assets-koushi-demo/homekebab.jpg"
+            alt="Kebab"
             className="plate-image"
+            loading="lazy"
+            decoding="async"
           />
         </div>
         <div className="food-content">
-          <h2 className="food-title">Main Dish</h2>
-          <p className="food-description">Our juicy fresh grilled Steak is served to satisfy your appetite</p>
-        </div>
-        <div className="flour-decoration">
-          <div className="flour-dot" style={{ width: '5px', height: '5px', top: '30px', right: '-35px' }}></div>
-          <div className="flour-dot" style={{ width: '4px', height: '4px', top: '50px', right: '-45px' }}></div>
-          <div className="flour-dot" style={{ width: '6px', height: '6px', top: '70px', right: '-30px' }}></div>
+          <h2 className="food-title">Kebab</h2>
+          <p className="food-description">Juicy, marinated meat grilled to perfection with rich spices and smoky flavor.
+          </p>
         </div>
       </div>
 
       {/* Food Item 3 - Left */}
-      <div className="food-item left" data-index="2">
-        <div className="plate-circle">
+      <div className="food-item left">
+        <div className="plate-circle scroll-reveal">
           <img
-            src="/salad.png"
-            alt="Side Dish"
+            src="/assets-koushi-demo/homebarbeque.jpg"
+            alt="Barbeque"
             className="plate-image"
+            loading="lazy"
+            decoding="async"
           />
         </div>
         <div className="food-content">
-          <h2 className="food-title">Side Dish</h2>
-          <p className="food-description">Have a healthy salad mixed with light sliced meat to complement your steak</p>
-        </div>
-        <div className="flour-decoration">
-          <div className="flour-dot" style={{ width: '4px', height: '4px', top: '25px', left: '-28px' }}></div>
-          <div className="flour-dot" style={{ width: '5px', height: '5px', top: '45px', left: '-38px' }}></div>
-          <div className="flour-dot" style={{ width: '3px', height: '3px', top: '65px', left: '-32px' }}></div>
+          <h2 className="food-title">Barbeque</h2>
+          <p className="food-description">Slow-cooked, smoky grilled dishes infused with bold marinades and charred goodness.</p>
         </div>
       </div>
 
       {/* Food Item 4 - Right */}
-      <div className="food-item right" data-index="3">
-        <div className="plate-circle">
+      <div className="food-item right">
+        <div className="plate-circle scroll-reveal">
           <img
-            src="/dessert.png"
-            alt="Dessert"
+            src="/assets-koushi-demo/homebrownie.jpg"
+            alt="Brownie"
             className="plate-image"
+            loading="lazy"
+            decoding="async"
           />
         </div>
         <div className="food-content">
-          <h2 className="food-title">Dessert</h2>
-          <p className="food-description">Finish your meal with a sweet cake</p>
-        </div>
-        <div className="flour-decoration">
-          <div className="flour-dot" style={{ width: '5px', height: '5px', top: '35px', right: '-33px' }}></div>
-          <div className="flour-dot" style={{ width: '4px', height: '4px', top: '55px', right: '-42px' }}></div>
-          <div className="flour-dot" style={{ width: '6px', height: '6px', top: '75px', right: '-28px' }}></div>
+          <h2 className="food-title">Brownie</h2>
+          <p className="food-description">A rich, fudgy chocolate dessert with a soft, melt-in-the-mouth texture.</p>
         </div>
       </div>
 
@@ -185,8 +94,8 @@ const FoodJourney = () => {
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: '#FFC107',
-            color: '#000',
+            backgroundColor: '#D97706',
+            color: '#fff',
             padding: '14px 40px',
             borderRadius: '50px',
             fontWeight: '600',
@@ -198,7 +107,7 @@ const FoodJourney = () => {
           }}
           onMouseOver={(e) => {
             e.currentTarget.style.transform = 'scale(1.05)';
-            e.currentTarget.style.boxShadow = '0 5px 15px rgba(255, 193, 7, 0.4)';
+            e.currentTarget.style.boxShadow = '0 5px 15px rgba(217, 119, 6, 0.35)';
           }}
           onMouseOut={(e) => {
             e.currentTarget.style.transform = 'scale(1)';
@@ -214,22 +123,22 @@ const FoodJourney = () => {
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: 'transparent',
-            color: '#FFF',
+            color: '#D97706',
             padding: '14px 40px',
             borderRadius: '50px',
             fontWeight: '600',
             fontSize: '1.1em',
-            border: '1px solid rgba(255, 255, 255, 0.3)',
+            border: '1px solid rgba(217, 119, 6, 0.35)',
             cursor: 'pointer',
             transition: 'all 0.2s ease'
           }}
           onMouseOver={(e) => {
-            e.currentTarget.style.borderColor = '#FFC107';
-            e.currentTarget.style.color = '#FFC107';
+            e.currentTarget.style.borderColor = '#D97706';
+            e.currentTarget.style.color = '#D97706';
           }}
           onMouseOut={(e) => {
-            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-            e.currentTarget.style.color = '#FFF';
+            e.currentTarget.style.borderColor = 'rgba(217, 119, 6, 0.35)';
+            e.currentTarget.style.color = '#D97706';
           }}
         >
           Order Now
@@ -242,9 +151,56 @@ const FoodJourney = () => {
 const Home = () => {
   const heroVideoSrc = '/videos/hero.mp4';
   const navigate = useNavigate();
+  const revealRootRef = useRef(null);
+
+  useEffect(() => {
+    const root = revealRootRef.current;
+    if (!root) return;
+
+    const revealEls = Array.from(root.querySelectorAll('.scroll-reveal'));
+    if (revealEls.length === 0) return;
+
+    const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) {
+      revealEls.forEach(el => el.classList.add('is-visible'));
+      return;
+    }
+
+    const observer = new IntersectionObserver((entries, obs) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+
+        const el = entry.target;
+        if (el instanceof HTMLElement && el.dataset.revealed === 'true') {
+          obs.unobserve(el);
+          continue;
+        }
+
+        if (el instanceof HTMLElement) {
+          el.dataset.revealed = 'true';
+          el.classList.add('is-visible');
+          obs.unobserve(el);
+        }
+      }
+    }, {
+      threshold: 0.2,
+      rootMargin: '0px 0px -10% 0px'
+    });
+
+    revealEls.forEach((el, idx) => {
+      const direction = idx % 2 === 0 ? 'left' : 'right';
+      el.setAttribute('data-reveal-direction', direction);
+      observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <div className="min-h-screen pb-20 bg-gradient-to-b from-[#0b0b0e] via-[#0f0f14] to-[#0b0b0e] text-white">
+    <div
+      ref={revealRootRef}
+      className="min-h-screen pb-20 bg-gradient-to-b from-[#0b0b0e] via-[#0f0f14] to-[#0b0b0e] text-white"
+    >
       {/* Hero */}
       <section className="relative h-[78vh] md:h-[86vh] w-full overflow-hidden">
         <video
@@ -296,28 +252,30 @@ const Home = () => {
       </section>
 
       {/* Discover Our Story Section */}
-      <section className="bg-black py-12 md:py-20 px-4 md:px-5 flex items-center justify-center">
-        <div className="flex flex-col md:flex-row items-center gap-8 md:gap-10 max-w-7xl p-6 md:p-10 bg-[#FFD700] rounded-xl shadow-lg w-full">
+      <section className="bg-transparent py-12 md:py-20 px-4 md:px-5 flex items-center justify-center">
+        <div className="flex flex-col md:flex-row items-center gap-8 md:gap-10 max-w-7xl p-6 md:p-10 bg-white/5 rounded-xl shadow-sm border border-white/10 w-full">
           <div className="flex-1 w-full max-w-[500px]">
             <img
-              src="https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800"
-              alt="Delicious Food"
-              className="w-full h-auto rounded-lg shadow-md"
+              src="/assets-koushi-demo/homeaboutus.gif"
+              alt="About us"
+              className="w-full h-auto rounded-lg shadow-sm scroll-reveal"
+              loading="lazy"
+              decoding="async"
             />
           </div>
           <div className="flex-1 w-full max-w-[500px] text-left">
-            <p style={{ color: '#333', fontStyle: 'italic', marginBottom: '10px', fontSize: '16px' }}>Discover</p>
-            <h2 style={{ fontSize: '36px', marginBottom: '20px', color: '#333', fontWeight: '600' }}>Our Story</h2>
-            <p style={{ fontSize: '16px', lineHeight: '1.6', color: '#333', marginBottom: '20px' }}>
+            <p style={{ color: 'rgba(255,255,255,0.72)', fontStyle: 'italic', marginBottom: '10px', fontSize: '16px' }}>Discover</p>
+            <h2 style={{ fontSize: '36px', marginBottom: '20px', color: '#fff', fontWeight: '600' }}>Our Story</h2>
+            <p style={{ fontSize: '16px', lineHeight: '1.6', color: 'rgba(255,255,255,0.78)', marginBottom: '20px' }}>
               CSK™ was Conceptualized in 2015 by 3 Engineers from CIT, Coimbatore. The name was inspired from the IPL team CSK (Chennai Super Kings).
             </p>
-            <p style={{ fontSize: '16px', lineHeight: '1.6', color: '#333', marginBottom: '30px' }}>
+            <p style={{ fontSize: '16px', lineHeight: '1.6', color: 'rgba(255,255,255,0.78)', marginBottom: '30px' }}>
               Being the fans of cricket and food lovers, we established our first fan based outlet in the name of CSK (Chats, Shakes & Kulfi) at Coimbatore in 2016.
             </p>
             <button
               onClick={() => navigate('/about')}
               style={{
-                backgroundColor: '#000',
+                backgroundColor: '#D97706',
                 color: '#fff',
                 textDecoration: 'none',
                 fontSize: '14px',
@@ -331,10 +289,10 @@ const Home = () => {
                 transition: 'background-color 0.3s'
               }}
               onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = '#333';
+                e.currentTarget.style.backgroundColor = '#B45309';
               }}
               onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = '#000';
+                e.currentTarget.style.backgroundColor = '#D97706';
               }}
             >
               More About Us
@@ -345,49 +303,20 @@ const Home = () => {
       </section>
 
       {/* Food Journey Section */}
-      <section className="food-journey-section" style={{ padding: '80px 5%', overflowX: 'hidden' }}>
+      <section className="food-journey-section py-12 md:py-20 px-4 md:px-6 overflow-x-hidden">
         {/* Header Section */}
-        <div className="menu-header" style={{ marginBottom: '80px' }}>
-          <div style={{
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '40px'
-          }}>
-            <div style={{ flex: '0 0 auto', textAlign: 'left' }}>
-              <h2 style={{
-                fontFamily: "'Brush Script MT', cursive",
-                fontSize: '1.5em',
-                color: '#d4af37',
-                fontWeight: '300',
-                letterSpacing: '2px',
-                marginBottom: '10px'
-              }}>
+        <div className="menu-header mb-12 md:mb-20">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 md:gap-10">
+            <div className="text-left">
+              <h2 className="font-heading text-xl md:text-2xl font-light tracking-wider text-amber-400 mb-2">
                 Discover
               </h2>
-              <h1 style={{
-                fontFamily: "'Georgia', serif",
-                fontSize: '3.5em',
-                color: '#ffffff',
-                fontWeight: '400',
-                letterSpacing: '4px',
-                lineHeight: '1',
-                margin: 0
-              }}>
+              <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight text-white leading-none">
                 Our Menu
               </h1>
             </div>
-            <div style={{ flex: '1 1 400px', textAlign: 'left' }}>
-              <p style={{
-                fontFamily: "'Georgia', serif",
-                fontSize: '1.1em',
-                color: '#b0b0b0',
-                lineHeight: '1.8',
-                letterSpacing: '0.5px',
-                margin: 0
-              }}>
+            <div className="max-w-2xl text-left">
+              <p className="text-sm sm:text-base md:text-lg text-white/70 leading-relaxed">
                 Few things come close to the joy of steak and chips - cooked simply with tender, inviting care. Rest assured that our chefs treat our fresh beef with the respect it deserves. The open kitchens in many of our steakhouses are testimony to this.
               </p>
             </div>
@@ -395,7 +324,7 @@ const Home = () => {
         </div>
         <style>{`
           .food-journey-section {
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            background: linear-gradient(135deg, #0b0b0e 0%, #101018 60%, #0b0b0e 100%);
             font-family: 'Georgia', serif;
           }
 
@@ -422,32 +351,11 @@ const Home = () => {
             transition: height 0.3s ease;
           }
 
-          .flour-particle-path {
-            position: absolute;
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: 50%;
-            box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
-            animation: fadeInParticle 0.6s ease-out forwards;
-            opacity: 0;
-          }
-
-          @keyframes fadeInParticle {
-            to { opacity: 1; }
-          }
-
           .food-item {
             display: flex;
             align-items: center;
             margin-bottom: 100px;
             position: relative;
-            opacity: 0;
-            transform: translateY(50px);
-            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-          }
-
-          .food-item.visible {
-            opacity: 1;
-            transform: translateY(0);
           }
 
           .food-item.left {
@@ -464,32 +372,82 @@ const Home = () => {
             width: 300px;
             height: 300px;
             border-radius: 50%;
-            background: white;
-            box-shadow: 0 25px 80px rgba(212, 175, 55, 0.4);
+            background: #FFF7E8;
+            box-shadow: 0 25px 80px rgba(180, 83, 9, 0.14);
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
             position: relative;
             flex-shrink: 0;
-            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+            transition: box-shadow 0.3s ease;
           }
 
-          .food-item.rotate-active .plate-circle {
-            transform: rotate(45deg);
+          /* Scroll reveal (Intersection Observer) */
+          .scroll-reveal {
+            --reveal-offset: 0px;
+            opacity: 0;
+            transform: translateX(var(--reveal-offset));
+            transition: opacity 1s ease-out, transform 1s ease-out;
+            will-change: transform, opacity;
           }
 
+          .scroll-reveal[data-reveal-direction="left"] {
+            --reveal-offset: -120px;
+          }
 
+          .scroll-reveal[data-reveal-direction="right"] {
+            --reveal-offset: 120px;
+          }
+
+          .scroll-reveal.is-visible {
+            opacity: 1;
+            transform: translateX(0);
+          }
+
+          .scroll-reveal.is-visible:hover {
+            transform: translateX(0) scale(1.02);
+          }
+
+          img.scroll-reveal.is-visible:hover {
+            filter: brightness(1.05);
+          }
+
+          .plate-circle.is-visible:hover .plate-image {
+            filter: brightness(1.06);
+          }
+
+          @media (max-width: 968px) {
+            .scroll-reveal[data-reveal-direction="left"] {
+              --reveal-offset: -70px;
+            }
+            .scroll-reveal[data-reveal-direction="right"] {
+              --reveal-offset: 70px;
+            }
+          }
+
+          @media (max-width: 480px) {
+            .scroll-reveal[data-reveal-direction="left"] {
+              --reveal-offset: -40px;
+            }
+            .scroll-reveal[data-reveal-direction="right"] {
+              --reveal-offset: 40px;
+            }
+          }
+
+          @media (prefers-reduced-motion: reduce) {
+            .scroll-reveal {
+              opacity: 1;
+              transform: none;
+              transition: none;
+            }
+          }
 
           .plate-image {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-          }
-
-          .food-item.rotate-active .plate-image {
-            transform: rotate(-45deg);
+            filter: brightness(1);
           }
 
           .food-content {
@@ -509,7 +467,7 @@ const Home = () => {
 
           .food-title {
             font-size: 2.8em;
-            color: #d4af37;
+            color: #F59E0B;
             font-weight: 300;
             letter-spacing: 3px;
             margin-bottom: 20px;
@@ -518,21 +476,10 @@ const Home = () => {
 
           .food-description {
             font-size: 1.2em;
-            color: #b0b0b0;
+            color: rgba(255, 255, 255, 0.7);
             line-height: 1.8;
             font-weight: 300;
             letter-spacing: 1px;
-          }
-
-          .flour-decoration {
-            position: absolute;
-            pointer-events: none;
-          }
-
-          .flour-dot {
-            position: absolute;
-            background: rgba(255, 255, 255, 0.6);
-            border-radius: 50%;
           }
 
           @media (max-width: 968px) {

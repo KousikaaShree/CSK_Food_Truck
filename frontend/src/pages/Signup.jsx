@@ -156,7 +156,6 @@ const Signup = () => {
           <GoogleLogin
             onSuccess={handleGoogleSuccess}
             onError={() => setError('Google Signup Failed')}
-            useOneTap
             theme="filled_black"
             shape="pill"
             text="signup_with"

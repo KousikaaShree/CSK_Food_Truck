@@ -9,7 +9,18 @@ const { authenticateUser } = require('../middleware/auth');
 const { OAuth2Client } = require('google-auth-library');
 const { sendOtpEmail } = require('../utils/sendEmail');
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const getGoogleAudiences = () => {
+  const raw =
+    process.env.GOOGLE_CLIENT_IDS ||
+    process.env.GOOGLE_CLIENT_ID ||
+    '';
+  return raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+};
+
+const client = new OAuth2Client();
 
 // Admin email allowlist — these emails are automatically assigned the 'admin' role
 const ADMIN_EMAILS = [
@@ -23,9 +34,11 @@ const generateToken = (userId, role = 'user') => {
 };
 
 const OTP_EXPIRES_MS = 5 * 60 * 1000;
+const IS_DEV = process.env.NODE_ENV !== 'production';
 const OTP_MAX_ATTEMPTS = 5;
-const OTP_MAX_RESENDS = 3;
-const OTP_RESEND_COOLDOWN_MS = 30 * 1000;
+// In development, OTP is frequently re-triggered while testing flows.
+const OTP_MAX_RESENDS = IS_DEV ? 20 : 3;
+const OTP_RESEND_COOLDOWN_MS = IS_DEV ? 3 * 1000 : 30 * 1000;
 
 const hashOtp = (email, otp) => {
   const salt = process.env.JWT_SECRET || 'csk-otp-salt';
@@ -249,9 +262,17 @@ router.post('/google/user', async (req, res) => {
       return res.status(400).json({ message: 'Google ID Token is required' });
     }
 
+    const audiences = getGoogleAudiences();
+    if (audiences.length === 0) {
+      return res.status(500).json({
+        message:
+          'Google OAuth is not configured. Set GOOGLE_CLIENT_IDS or GOOGLE_CLIENT_ID in backend env.',
+      });
+    }
+
     const ticket = await client.verifyIdToken({
       idToken,
-      audience: process.env.GOOGLE_CLIENT_ID,
+      audience: audiences,
     });
 
     const { name, email, picture, sub: googleId } = ticket.getPayload();
@@ -392,9 +413,17 @@ router.post('/google/admin', async (req, res) => {
       return res.status(400).json({ message: 'Google ID Token is required' });
     }
 
+    const audiences = getGoogleAudiences();
+    if (audiences.length === 0) {
+      return res.status(500).json({
+        message:
+          'Google OAuth is not configured. Set GOOGLE_CLIENT_IDS or GOOGLE_CLIENT_ID in backend env.',
+      });
+    }
+
     const ticket = await client.verifyIdToken({
       idToken,
-      audience: process.env.GOOGLE_CLIENT_ID,
+      audience: audiences,
     });
 
     const { email } = ticket.getPayload();
