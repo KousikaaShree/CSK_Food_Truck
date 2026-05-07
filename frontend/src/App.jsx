@@ -20,6 +20,7 @@ import AdminOrders from './pages/admin/AdminOrders';
 import AdminMenuManager from './pages/admin/AdminMenuManager';
 import PrivateRoute from './components/PrivateRoute';
 import AdminRoute from './components/AdminRoute';
+import Footer from './components/Footer';
 
 function App() {
   return (
@@ -29,26 +30,26 @@ function App() {
           <Router>
             <Routes>
               {/* Public Routes */}
-              <Route path="/" element={<><Navbar /><Home /></>} />
-              <Route path="/menu" element={<><Navbar /><Menu /></>} />
-              <Route path="/about" element={<><Navbar /><About /></>} />
-              <Route path="/contact" element={<><Navbar /><Contact /></>} />
-              <Route path="/login" element={<><Navbar /><Login /></>} />
-              <Route path="/signup" element={<><Navbar /><Signup /></>} />
+              <Route path="/" element={<><Navbar /><Home /><Footer /></>} />
+              <Route path="/menu" element={<><Navbar /><Menu /><Footer /></>} />
+              <Route path="/about" element={<><Navbar /><About /><Footer /></>} />
+              <Route path="/contact" element={<><Navbar /><Contact /><Footer /></>} />
+              <Route path="/login" element={<><Navbar /><Login /><Footer /></>} />
+              <Route path="/signup" element={<><Navbar /><Signup /><Footer /></>} />
               <Route path="/otp-verification" element={<OtpVerification />} />
 
               {/* User Protected Routes */}
-              <Route path="/cart" element={<PrivateRoute><><Navbar /><Cart /></></PrivateRoute>} />
-              <Route path="/checkout" element={<PrivateRoute><><Navbar /><Checkout /></></PrivateRoute>} />
-              <Route path="/order-confirmation/:orderId" element={<PrivateRoute><><Navbar /><OrderConfirmation /></></PrivateRoute>} />
-              <Route path="/dashboard" element={<PrivateRoute><><Navbar /><UserDashboard /></></PrivateRoute>} />
+              <Route path="/cart" element={<PrivateRoute><><Navbar /><Cart /><Footer /></></PrivateRoute>} />
+              <Route path="/checkout" element={<PrivateRoute><><Navbar /><Checkout /><Footer /></></PrivateRoute>} />
+              <Route path="/order-confirmation/:orderId" element={<PrivateRoute><><Navbar /><OrderConfirmation /><Footer /></></PrivateRoute>} />
+              <Route path="/dashboard" element={<PrivateRoute><><Navbar /><UserDashboard /><Footer /></></PrivateRoute>} />
 
               {/* Admin Routes — protected by AdminRoute (role === 'admin') */}
               <Route path="/admin" element={<Navigate to="/admin/dashboard" />} />
               <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
               <Route path="/admin/menu" element={<AdminRoute><AdminMenu /></AdminRoute>} />
               <Route path="/admin/orders" element={<AdminRoute><AdminOrders /></AdminRoute>} />
-              <Route path="/admin/menu-manager" element={<AdminRoute><><Navbar /><AdminMenuManager /></></AdminRoute>} />
+              <Route path="/admin/menu-manager" element={<AdminRoute><><Navbar /><AdminMenuManager /><Footer /></></AdminRoute>} />
 
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
